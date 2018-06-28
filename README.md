@@ -8,10 +8,11 @@
 * Ubuntu 16.04 (Server)
 
 ## System
-* SELinux or AppArmor are disabled
+* [SELinux](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/selinux_users_and_administrators_guide/sect-security-enhanced_linux-working_with_selinux-changing_selinux_modes) or [AppArmor](https://help.ubuntu.com/lts/serverguide/apparmor.html.en) are disabled
 * root privileges are required (using sudo)
 * All nodes must have different hostnames
 * `/var/lib` partition must support Extended Attributes: XFS is recommended
+* All have to be up-to-date
 
 ## Network
 * All nodes connected to the same LAN through the specified interface (first one by default)
