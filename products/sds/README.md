@@ -7,19 +7,19 @@ You have to choose your POC architecture:
 # Installation
 
 After filling the inventory corresponding to your choice
-* For a N/3 nodes :
-** [inventory](inventories/n-nodes/01_inventory.ini) 
-** [OpenIO configuration](inventories/n-nodes/group_vars/openio.yml)
-* For a uniq node :
-** [inventory](inventories/standalone/01_inventory.ini) 
-** [OpenIO configuration](inventories/standalone/group_vars/openio.yml)
+- For a N/3 nodes : 
+    - [inventory](inventories/n-nodes/01_inventory.ini) (Adapt IP address and user ssh)
+    - [OpenIO configuration](inventories/n-nodes/group_vars/openio.yml)
+- For a uniq node :
+    - [inventory](inventories/standalone/01_inventory.ini) (Adapt IP address and user ssh)
+    - [OpenIO configuration](inventories/standalone/group_vars/openio.yml)
 
 You can check your customization like this:
-* `ansible all -i inventories/<YOUR_CHOICE>/ -bv -m ping`
+* `ansible all -i inventories/<YOUR_CHOICE> -bv -m ping`
 
 You can run these commands: 
 * `./requirements_install.sh` for download requirements
-* `ansible-playbook -i inventories/<YOUR_CHOICE>/ main.yml` for deploy
+* `ansible-playbook -i inventories/<YOUR_CHOICE> main.yml` for deploy
 
 # Test
 
