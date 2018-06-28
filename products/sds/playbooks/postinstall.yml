@@ -66,4 +66,12 @@
             export OS_AUTH_URL=http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:35357
             export OS_IDENTITY_API_VERSION=3
             export OS_IMAGE_API_VERSION=2
+
+    - name: Add script for tests in /root/checks.sh
+      template:
+        src: "{{ playbook_dir ~ '/../templates/checks.sh.j2' }}"
+        dest: /root/checks.sh
+        owner: root
+        group: root
+        mode: 0750
 ...

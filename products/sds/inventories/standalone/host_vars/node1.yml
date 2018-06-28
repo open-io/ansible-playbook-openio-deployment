@@ -1,3 +1,6 @@
 ---
-
+openio_data_mounts:
+  - { mountpoint: "/var/lib/oio/sds" }
+openio_metadata_mounts:
+  - { mountpoint: "/var/lib/oio/sds" }
 ...

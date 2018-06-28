@@ -1,0 +1,72 @@
+#!/bin/bash
+#{{ ansible_managed }}
+
+YELLOW="\e[33m"
+NC="\e[39m"
+
+echo '## OPENIO'
+
+echo -e $YELLOW Display the cluster status. $NC
+openio cluster list
+echo --
+
+echo -e $YELLOW Upload the /etc/passwd into the bucket MY_CONTAINER of the MY_ACCOUNT project. $NC
+openio object create MY_CONTAINER /etc/passwd --oio-account MY_ACCOUNT
+echo --
+
+echo -e $YELLOW Get some informations about your object. $NC
+openio container show MY_CONTAINER --oio-account MY_ACCOUNT
+echo --
+
+echo -e $YELLOW List object in container. $NC
+openio object list --oio-account MY_ACCOUNT MY_CONTAINER
+echo --
+
+echo -e $YELLOW Find the services involved for your container. $NC
+openio container locate MY_CONTAINER --oio-account MY_ACCOUNT
+echo --
+
+echo -e $YELLOW Save the data stored in the given object to the '--file' destination. $NC
+openio object save MY_CONTAINER passwd --oio-account MY_ACCOUNT --file /tmp/passwd
+head /tmp/passwd
+echo --
+
+echo -e $YELLOW Delete your object. $NC
+openio object delete MY_CONTAINER passwd --oio-account MY_ACCOUNT
+echo --
+
+echo -e $YELLOW Delete your empty container. $NC
+openio container delete MY_CONTAINER --oio-account MY_ACCOUNT
+echo --
+
+echo
+
+echo '------'
+echo '## AWS'
+
+echo -e $YELLOW Create a bucket 'mybucket'. $NC
+aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 mb s3://mybucket
+echo --
+
+echo -e $YELLOW Upload the '/etc/passwd' into the bucket 'mybucket'. $NC
+aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 cp /etc/passwd s3://mybucket
+echo --
+
+echo -e $YELLOW List your buckets. $NC
+aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 ls s3://mybucket --recursive --human-readable --summarize
+echo --
+
+echo -e $YELLOW Save the data stored in the given object into the file given. $NC
+aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 cp s3://mybucket/passwd /tmp/passwd.aws
+head /tmp/passwd.aws
+echo --
+
+echo -e $YELLOW Delete your object. $NC
+aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 rm s3://mybucket/passwd
+echo --
+
+echo -e $YELLOW Delete your empty bucket. $NC
+aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 rb s3://mybucket
+echo
+
+echo Done

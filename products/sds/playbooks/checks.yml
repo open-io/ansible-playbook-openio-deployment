@@ -20,7 +20,7 @@
   max_fail_percentage: 0
   gather_facts: false
   environment: "{{ openio_environment }}"
-  become: false
+  become: true
 
   tasks:
     - name: Stop if even number of zookeeper hosts
@@ -46,6 +46,10 @@
       register: request
       changed_when: false
       failed_when: false
+      tags: test
+    - debug: 
+        msg: "{{ request }}"
+      tags: test
 
     - name: Stop if OpenIO repository is not reachable
       assert:
@@ -98,11 +102,16 @@
       changed_when: false
       failed_when: false
 
-    - name: Check APT policy
-      assert:
-        that: apt_policy.rc == 101
-      ignore_errors: "{{ openio_ignore_assert_errors }}"
-      when: ansible_os_family == 'Debian'
+    - name: Fix APT policy
+      copy:
+        dest: /usr/sbin/policy-rc.d
+        content: |
+          #!/bin/sh
+          exit 101 # action forbidden by policy
+          EOF
+      when: 
+        - ansible_os_family == 'Debian'
+        - apt_policy.rc != 101
 
     - name: Stop if kernel version is too low
       assert:
