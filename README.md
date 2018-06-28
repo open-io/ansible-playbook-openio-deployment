@@ -18,5 +18,6 @@
 * Firewall is disabled
 
 ## Setup
-* Clone this repository 
+* Clone this repository (or download it with wget and unzip)
 * Install Ansible as [describe](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+* Install git for download requirements
