@@ -12,7 +12,7 @@
 * root privileges are required (using sudo)
 * All nodes must have different hostnames
 * `/var/lib` partition must support Extended Attributes: XFS is recommended
-* All have to be up-to-date
+* All have to be up-to-date `yum update -y` or `apt update -y && apt upgrade -y`
 
 ## Network
 * All nodes connected to the same LAN through the specified interface (first one by default)
