@@ -1,0 +1,30 @@
+---
+- name: facts keystone
+  hosts: keystone
+  tasks:
+    - name: gather facts
+      setup: {}
+
+- name: Install and configure OpenIO Swift
+  any_errors_fatal: true
+  hosts: oioswift
+  become : true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+
+  pre_tasks:
+    - name: refresh facts
+      setup:
+      when: ansible_default_ipv4 is not defined
+
+  roles:
+    - role: memcached
+      openio_memcached_namespace: "{{ namespace }}"
+      openio_memcached_gridinit_dir: "/etc/gridinit.d/"
+      openio_memcached_gridinit_file_prefix: "{{ namespace }}-"
+
+    - role: oioswift
+      openio_oioswift_namespace: "{{ namespace }}"
+      openio_oioswift_gridinit_dir: "/etc/gridinit.d/"
+      openio_oioswift_gridinit_file_prefix: "{{ namespace }}-"
+...

@@ -1,0 +1,42 @@
+---
+- name: Install and configure OpenIO SDS
+  any_errors_fatal: true
+  hosts: openio
+  become : true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+
+  pre_tasks:
+    - name: refresh facts
+      setup:
+      when: ansible_default_ipv4 is not defined
+
+  roles:
+    - role: repositories
+      openio_repository_products:
+        sds:
+          release: "{{ openio_sds_release }}"
+
+
+    - role: openio-sds
+      openio_sds_version: "{{ openio_sds_release }}"
+      openio_namespace: "{{ namespace }}"
+      openio_storage_policy: "{{ namespace_storage_policy }}"
+      openio_sds_sysctl_managed: "{{ openio_manage_sysctl }}"
+      openio_meta1_digits: "{{ namespace_meta1_digits }}"
+      openio_zk_cluster_ip: "{{ groups['zookeeper'] | map('extract',hostvars,['ansible_' ~ openio_bind_interface,'ipv4','address']) | list }}"
+      openio_redis_cluster_ip: "{{ groups['openio_redis_cluster'] | map('extract',hostvars,['ansible_' ~ openio_bind_interface,'ipv4','address']) | list }}"
+      conscience_ip: "{{ namespace_conscience_address }}"
+      openio_bootstrap: "{{ openio_ecd }}"
+      openio_network_private_ipaddress: "{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}"
+      openio_network_public_ipaddress: "{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}"
+      openio_sds_default_account: "{{ default_account }}"
+      openio_chunk_size: "{{ (namespace_chunk_size_megabytes | int) * 1024 * 1024 }}"
+      openio_zk_inventory_group_name: zookeeper
+
+    - role: ecd
+      openio_ecd_bind_interface: "{{ openio_bind_interface }}"
+      openio_ecd_gridinit_file_prefix: "{{ namespace }}-"
+      openio_ecd_gridinit_dir: "/etc/gridinit.d/"
+      when: openio_ecd
+...

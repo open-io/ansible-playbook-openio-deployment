@@ -1,0 +1,20 @@
+---
+- name: Install Zookeeper
+  any_errors_fatal: true
+  hosts: zookeeper
+  become : true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+
+  pre_tasks:
+    - name: refresh facts
+      setup:
+      when: ansible_default_ipv4 is not defined
+
+  roles:
+    - role: gridinit
+    - role: zookeeper
+      openio_zookeeper_namespace: "{{ namespace }}"
+      openio_zookeeper_gridinit_dir: "/etc/gridinit.d/"
+      openio_zookeeper_gridinit_file_prefix: "{{ namespace }}-"
+...

@@ -1,0 +1,69 @@
+---
+- name: Configure node for test
+  any_errors_fatal: true
+  hosts: openio
+  become : true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+
+  pre_tasks:
+    - name: refresh facts
+      setup:
+      when: ansible_default_ipv4 is not defined
+  tasks:
+    - name: Install python
+      package:
+        name: python-pip
+
+    - name: Install awscli
+      pip:
+        name: awscli
+
+    - name: Creating AWS credentials
+      command: openstack ec2 credentials create -f json
+      register: cred
+      environment: 
+        OS_PROJECT_DOMAIN_NAME: Default
+        OS_USER_DOMAIN_NAME: Default
+        OS_PROJECT_NAME: demo
+        OS_USERNAME: demo
+        OS_PASSWORD: "{{ openio_keystone_demo_password }}"
+        OS_AUTH_URL: "http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:35357"
+        OS_IDENTITY_API_VERSION: 3
+        OS_IMAGE_API_VERSION: 2
+    
+    - name: Create .aws folder 
+      file:
+        path: /root/.aws
+        state: directory
+        mode: 0750
+
+    - name: Configure environment for test
+      no_log: true
+      copy:
+        dest: "{{ item.path }}"
+        content: "{{ item.content }}"
+      with_items: 
+        - path : /root/.aws/credentials
+          content: |
+            [default]
+            aws_access_key_id ={{ (( cred.stdout | from_json ) | selectattr('Field', 'match', 'access') | list | first )['Value'] }}
+            aws_secret_access_key = {{ (( cred.stdout | from_json ) | selectattr('Field', 'match', 'secret') | list | first )['Value'] }}
+        - path : /root/.aws/config
+          content: |
+            [default]
+            region = RegionOne
+            s3 =
+              signature_version = s3
+        - path: /etc/profile.d/openio.sh
+          content: |
+            export OIO_NS={{ namespace }}
+            export OS_PROJECT_DOMAIN_NAME=Default
+            export OS_USER_DOMAIN_NAME=Default
+            export OS_PROJECT_NAME=demo
+            export OS_USERNAME=demo
+            export OS_PASSWORD="{{ openio_keystone_demo_password }}"
+            export OS_AUTH_URL=http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:35357
+            export OS_IDENTITY_API_VERSION=3
+            export OS_IMAGE_API_VERSION=2
+...

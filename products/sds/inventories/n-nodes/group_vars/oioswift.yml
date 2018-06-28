@@ -1,0 +1,5 @@
+---
+openio_oioswift_bind_interface:  "{{ openio_bind_interface }}"
+openio_oioswift_sds_proxy_namespace: "{{ namespace }}"
+openio_oioswift_pipeline: "{{ pipeline_keystone }}"
+...

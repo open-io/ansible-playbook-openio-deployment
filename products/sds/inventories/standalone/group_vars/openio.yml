@@ -1,0 +1,42 @@
+---
+# Package repository to use
+openio_sds_release: "17.04"
+
+# Namespace
+namespace: OPENIO
+namespace_conscience_address: "{{ groups['openio_conscience'] | map('extract',hostvars,['ansible_' ~ openio_bind_interface,'ipv4','address']) | list | first }}"
+#namespace_meta1_digits: "2"
+# Replication
+namespace_storage_policy: SINGLE
+# Parts of objects
+namespace_chunk_size_megabytes: 100
+# Erasure coding 
+openio_ecd: true
+# No  replication on single node
+openio_service_update_policy: "{'meta2'=>'KEEP|1|1|','sqlx'=>'KEEP|1|1|','rdir'=>'KEEP|1|1|user_is_a_service=rawx'}"
+
+# Network
+openio_bind_interface: "{{ ansible_default_ipv4.alias }}"
+
+# Password
+openio_database_root_password: '#qeunovlhkojkDyzdllsdfmdoct794'
+openio_database_keystone_password: '9895bPievwmcvFqpujqixyhEcbJs_2'
+
+openio_keystone_admin_password: ADMIN_PASS
+openio_keystone_swift_password: SWIFT_PASS
+openio_keystone_demo_password: DEMO_PASS
+
+# sysctl
+openio_manage_sysctl: true
+
+# Account
+default_account: openio
+
+########
+# ---- Low memory nodes (ARM, docker, ...)
+openio_account_workers: 1
+openio_oioswift_workers: 1
+namespace_meta1_digits: "0"
+openio_zookeeper_parallel_gc_threads: 1
+openio_zookeeper_memory: "128M"
+...

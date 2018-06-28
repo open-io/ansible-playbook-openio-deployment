@@ -1,0 +1,46 @@
+---
+- src: https://github.com/open-io/ansible-role-openio-repository.git
+  version: 4bded6650dd6801743bb7fc2deae336515264e4c
+  name: repositories
+
+- src: https://github.com/open-io/ansible-role-gridinit
+  version: e168647c8e2ec02269e3138be880eb00952226ba
+  name: gridinit
+
+- src: https://github.com/open-io/ansible-role-openio-keystone
+  version: 56c0ad802d7d59a95b41beacd4eaf663343012ae
+  name: keystone
+
+- src: https://github.com/open-io/ansible-role-openio-sds
+  version: 0971c5a548692d81fe00d0859f8599b1ca204a6a
+  name: openio-sds
+
+- src: https://github.com/open-io/ansible-role-openio-netdata
+  version: cc1fe69b3b71a440e8a1c0800493d3dfe7bb3138
+  name: netdata
+
+- src: https://github.com/open-io/ansible-role-openio-memcached
+  version: 6e6df72a43a866dc71ba3492bfc8431afa57c419
+  name: memcached
+
+- src: https://github.com/open-io/ansible-role-openio-oioswift.git
+  version: 5569a6629e035fbc607254e8274d8d9cb6a6616f
+  name: oioswift
+
+- src: https://github.com/open-io/ansible-role-openio-ecd.git
+  version: a2441fd59614529881c6e55cf504b5d50b538e55
+  name: ecd
+
+- src: https://github.com/open-io/ansible-role-openio-account.git
+  version: bb35d53a7ae4044207242aff37ed61327ab4d69e
+  name: account
+
+- src: https://github.com/open-io/ansible-role-openio-zookeeper
+  version: 69e8607dc97569ba0547da10e61de05102845651
+  name: zookeeper
+
+- src: https://github.com/geerlingguy/ansible-role-ntp
+  version: ff09dda458223e2d82ed5a6bfae30dace8b19b3b
+  name: ntp
+...
+

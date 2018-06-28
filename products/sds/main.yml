@@ -1,0 +1,33 @@
+---
+- name: Checks
+  import_playbook: playbooks/checks.yml
+  tags: checks
+
+- name: Install base
+  import_playbook: playbooks/install_basic_needs.yml
+  tags: base
+
+- name: zookeeper
+  import_playbook: playbooks/zookeeper.yml
+  tags: zk
+
+- name: account
+  import_playbook: playbooks/account.yml
+  tags: account
+
+- name: SDS
+  import_playbook: playbooks/openiosds.yml
+  tags: sds
+
+- name: Keystone
+  import_playbook: playbooks/keystone.yml
+  tags: keystone
+
+- name: Swift
+  import_playbook: playbooks/oioswift.yml
+  tags: swift
+
+- name: Post install
+  import_playbook: playbooks/postinstall.yml
+  tags: post
+...
