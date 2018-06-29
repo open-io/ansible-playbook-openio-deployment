@@ -32,34 +32,34 @@ Normal output:
 [root@node1 ~]# ./checks.sh
 ## OPENIO
  Display the cluster status.
-+---------+-----------------+---------------------------------+----------+-------+------+-------+
-| Type    | Id              | Volume                          | Location | Slots | Up   | Score |
-+---------+-----------------+---------------------------------+----------+-------+------+-------+
-| rdir    | 172.17.0.3:6301 | /var/lib/oio/sds/OPENIO/rdir-1  | node2    | n/a   | True |    66 |
-| rdir    | 172.17.0.4:6301 | /var/lib/oio/sds/OPENIO/rdir-1  | node3    | n/a   | True |    68 |
-| rdir    | 172.17.0.2:6301 | /var/lib/oio/sds/OPENIO/rdir-1  | node1    | n/a   | True |    67 |
-| account | 172.17.0.3:6009 | n/a                             | node2    | n/a   | True |    60 |
-| account | 172.17.0.4:6009 | n/a                             | node3    | n/a   | True |    59 |
-| account | 172.17.0.2:6009 | n/a                             | node1    | n/a   | True |    61 |
-| rawx    | 172.17.0.3:6201 | /var/lib/oio/sds/OPENIO/rawx-1  | node2    | n/a   | True |    67 |
-| rawx    | 172.17.0.4:6201 | /var/lib/oio/sds/OPENIO/rawx-1  | node3    | n/a   | True |    67 |
-| rawx    | 172.17.0.2:6201 | /var/lib/oio/sds/OPENIO/rawx-1  | node1    | n/a   | True |    67 |
-| meta2   | 172.17.0.3:6121 | /var/lib/oio/sds/OPENIO/meta2-1 | node2    | n/a   | True |    67 |
-| meta2   | 172.17.0.4:6121 | /var/lib/oio/sds/OPENIO/meta2-1 | node3    | n/a   | True |    67 |
-| meta2   | 172.17.0.2:6121 | /var/lib/oio/sds/OPENIO/meta2-1 | node1    | n/a   | True |    67 |
-| meta1   | 172.17.0.3:6111 | /var/lib/oio/sds/OPENIO/meta1-1 | node2    | n/a   | True |    67 |
-| meta1   | 172.17.0.4:6111 | /var/lib/oio/sds/OPENIO/meta1-1 | node3    | n/a   | True |    67 |
-| meta1   | 172.17.0.2:6111 | /var/lib/oio/sds/OPENIO/meta1-1 | node1    | n/a   | True |    67 |
-| meta0   | 172.17.0.3:6001 | /var/lib/oio/sds/OPENIO/meta0-1 | node2    | n/a   | True |    81 |
-| meta0   | 172.17.0.4:6001 | /var/lib/oio/sds/OPENIO/meta0-1 | node3    | n/a   | True |    85 |
-| meta0   | 172.17.0.2:6001 | /var/lib/oio/sds/OPENIO/meta0-1 | node1    | n/a   | True |    82 |
-+---------+-----------------+---------------------------------+----------+-------+------+-------+
++---------+-----------------+------------+---------------------------------+----------+-------+------+-------+
+| Type    | Addr            | Service Id | Volume                          | Location | Slots | Up   | Score |
++---------+-----------------+------------+---------------------------------+----------+-------+------+-------+
+| account | 10.0.0.187:6009 | n/a        | n/a                             | test-3   | n/a   | True |    99 |
+| account | 10.0.0.184:6009 | n/a        | n/a                             | test-1   | n/a   | True |    99 |
+| account | 10.0.0.185:6009 | n/a        | n/a                             | test-2   | n/a   | True |    99 |
+| meta0   | 10.0.0.187:6001 | n/a        | /var/lib/oio/sds/OPENIO/meta0-1 | test-3   | n/a   | True |    99 |
+| meta0   | 10.0.0.184:6001 | n/a        | /var/lib/oio/sds/OPENIO/meta0-1 | test-1   | n/a   | True |    99 |
+| meta0   | 10.0.0.185:6001 | n/a        | /var/lib/oio/sds/OPENIO/meta0-1 | test-2   | n/a   | True |    99 |
+| meta1   | 10.0.0.187:6111 | n/a        | /var/lib/oio/sds/OPENIO/meta1-1 | test-3   | n/a   | True |    98 |
+| meta1   | 10.0.0.184:6111 | n/a        | /var/lib/oio/sds/OPENIO/meta1-1 | test-1   | n/a   | True |    98 |
+| meta1   | 10.0.0.185:6111 | n/a        | /var/lib/oio/sds/OPENIO/meta1-1 | test-2   | n/a   | True |    98 |
+| meta2   | 10.0.0.187:6121 | n/a        | /var/lib/oio/sds/OPENIO/meta2-1 | test-3   | n/a   | True |    98 |
+| meta2   | 10.0.0.184:6121 | n/a        | /var/lib/oio/sds/OPENIO/meta2-1 | test-1   | n/a   | True |    98 |
+| meta2   | 10.0.0.185:6121 | n/a        | /var/lib/oio/sds/OPENIO/meta2-1 | test-2   | n/a   | True |    98 |
+| rawx    | 10.0.0.187:6201 | n/a        | /var/lib/oio/sds/OPENIO/rawx-1  | test-3   | n/a   | True |    98 |
+| rawx    | 10.0.0.184:6201 | n/a        | /var/lib/oio/sds/OPENIO/rawx-1  | test-1   | n/a   | True |    98 |
+| rawx    | 10.0.0.185:6201 | n/a        | /var/lib/oio/sds/OPENIO/rawx-1  | test-2   | n/a   | True |    98 |
+| rdir    | 10.0.0.187:6301 | n/a        | /var/lib/oio/sds/OPENIO/rdir-1  | test-3   | n/a   | True |    99 |
+| rdir    | 10.0.0.184:6301 | n/a        | /var/lib/oio/sds/OPENIO/rdir-1  | test-1   | n/a   | True |    99 |
+| rdir    | 10.0.0.185:6301 | n/a        | /var/lib/oio/sds/OPENIO/rdir-1  | test-2   | n/a   | True |    99 |
++---------+-----------------+------------+---------------------------------+----------+-------+------+-------+
 --
  Upload the /etc/passwd into the bucket MY_CONTAINER of the MY_ACCOUNT project.
 +--------+------+----------------------------------+--------+
 | Name   | Size | Hash                             | Status |
 +--------+------+----------------------------------+--------+
-| passwd | 1383 | 43C04E76AA46CFC200AB9C2965451188 | Ok     |
+| passwd | 1730 | 9993F77821043A9F5EF7625CCD3A49FC | Ok     |
 +--------+------+----------------------------------+--------+
 --
  Get some informations about your object.
@@ -68,12 +68,13 @@ Normal output:
 +----------------+--------------------------------------------------------------------+
 | account        | MY_ACCOUNT                                                         |
 | base_name      | 7B1F1716BE955DE2D677B68819836E4F75FD2424F6D22DB60F9F2BB40331A741.1 |
-| bytes_usage    | 1.383KB                                                            |
+| bytes_usage    | 1.73KB                                                             |
 | container      | MY_CONTAINER                                                       |
-| ctime          | 1530190046                                                         |
+| ctime          | 1530281508                                                         |
 | max_versions   | Namespace default                                                  |
 | objects        | 1                                                                  |
 | quota          | Namespace default                                                  |
+| status         | Enabled                                                            |
 | storage_policy | Namespace default                                                  |
 +----------------+--------------------------------------------------------------------+
 --
@@ -81,19 +82,20 @@ Normal output:
 +--------+------+----------------------------------+------------------+
 | Name   | Size | Hash                             |          Version |
 +--------+------+----------------------------------+------------------+
-| passwd | 1383 | 43C04E76AA46CFC200AB9C2965451188 | 1530190046700960 |
+| passwd | 1730 | 9993F77821043A9F5EF7625CCD3A49FC | 1530281508164444 |
 +--------+------+----------------------------------+------------------+
-./checks.sh: line 23: echoi: command not found
+--
  Find the services involved for your container.
 +-----------+--------------------------------------------------------------------+
 | Field     | Value                                                              |
 +-----------+--------------------------------------------------------------------+
 | account   | MY_ACCOUNT                                                         |
 | base_name | 7B1F1716BE955DE2D677B68819836E4F75FD2424F6D22DB60F9F2BB40331A741.1 |
-| meta0     | 172.17.0.3:6001, 172.17.0.4:6001, 172.17.0.2:6001                  |
-| meta1     | 172.17.0.2:6111, 172.17.0.3:6111, 172.17.0.4:6111                  |
-| meta2     | 172.17.0.2:6121, 172.17.0.3:6121, 172.17.0.4:6121                  |
+| meta0     | 10.0.0.187:6001, 10.0.0.184:6001, 10.0.0.185:6001                  |
+| meta1     | 10.0.0.184:6111, 10.0.0.185:6111, 10.0.0.187:6111                  |
+| meta2     | 10.0.0.187:6121, 10.0.0.184:6121, 10.0.0.185:6121                  |
 | name      | MY_CONTAINER                                                       |
+| status    | Enabled                                                            |
 +-----------+--------------------------------------------------------------------+
 --
  Save the data stored in the given object to the --file destination.
@@ -127,10 +129,10 @@ make_bucket: mybucket
 upload: ../etc/passwd to s3://mybucket/passwd
 --
  List your buckets.
-2018-06-28 14:47:30    1.4 KiB passwd
+2018-06-29 16:11:51    1.7 KiB passwd
 
 Total Objects: 1
-   Total Size: 1.4 KiB
+   Total Size: 1.7 KiB
 --
  Save the data stored in the given object into the file given.
 download: s3://mybucket/passwd to ../tmp/passwd.aws
@@ -152,7 +154,6 @@ delete: s3://mybucket/passwd
 remove_bucket: mybucket
 
 Done
-
 ```
 
 # Low capacity nodes
