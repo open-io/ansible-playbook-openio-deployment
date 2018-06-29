@@ -1,6 +1,6 @@
 ---
 # Package repository to use
-openio_sds_release: "17.04"
+openio_sds_release: "18.04"
 
 # Namespace
 namespace: OPENIO
@@ -32,9 +32,9 @@ default_account: openio
 
 ########
 # ---- Low memory nodes (ARM, docker, ...)
-openio_account_workers: 1
-openio_oioswift_workers: 1
-namespace_meta1_digits: "1"
-openio_zookeeper_parallel_gc_threads: 1
-openio_zookeeper_memory: "128M"
+#openio_account_workers: 1
+#openio_oioswift_workers: 1
+#namespace_meta1_digits: "1"
+#openio_zookeeper_parallel_gc_threads: 1
+#openio_zookeeper_memory: "256M"
 ...

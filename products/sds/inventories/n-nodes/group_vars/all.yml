@@ -34,3 +34,8 @@ ntp_restrict:
 
 # for proxies by example
 openio_environment: {}
+
+openio_manage_os_requirement: true
+
+# mirror
+#openio_mirror: "mirror2.openio.io"

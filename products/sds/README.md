@@ -25,7 +25,7 @@ You can run these commands:
 
 All the nodes are configured to easily use the openio-cli and aws-clI.
 
-Log you into one node and look at the file `/root/check.sh`
+Log you into one node and look at the file `/root/checks.sh`
 
 Normal output:
 ```
