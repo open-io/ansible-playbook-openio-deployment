@@ -40,5 +40,5 @@ openio_environment: {}
 openio_manage_os_requirement: true
 
 # mirror
-openio_mirror: "mirror.n2openio.io"
+openio_mirror: "mirror.openio.io"
 ...
