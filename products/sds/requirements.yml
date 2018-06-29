@@ -8,11 +8,11 @@
   name: gridinit
 
 - src: https://github.com/open-io/ansible-role-openio-keystone
-  version: 56c0ad802d7d59a95b41beacd4eaf663343012ae
+  version: aaeabeb94c42924dadd34442ee6f049948766f32
   name: keystone
 
 - src: https://github.com/open-io/ansible-role-openio-sds
-  version: 0971c5a548692d81fe00d0859f8599b1ca204a6a
+  version: 0ecf890f1f12ac61044eb4a31388ef6797ca367e
   name: openio-sds
 
 - src: https://github.com/open-io/ansible-role-openio-netdata
@@ -36,7 +36,7 @@
   name: account
 
 - src: https://github.com/open-io/ansible-role-openio-zookeeper
-  version: 69e8607dc97569ba0547da10e61de05102845651
+  version: a0cb4fc3d6b2210c605c6c99fe5df1fa6077cb01
   name: zookeeper
 
 - src: https://github.com/geerlingguy/ansible-role-ntp

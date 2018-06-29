@@ -12,6 +12,7 @@ openio_distribution_supported:
 openio_release_supported:
   - "17.04"
   - "18.04"
+  - "18.10"
 
 # openio's GID
 openio_group_openio_gid: 220
@@ -34,3 +35,11 @@ ntp_restrict:
 
 # for proxies by example
 openio_environment: {}
+
+# Install require on targets
+openio_manage_os_requirement: true
+
+# mirror
+openio_mirror: "mirror.openio.io"
+
+openio_manage_os_requirement: true 
