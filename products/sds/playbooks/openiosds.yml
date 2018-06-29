@@ -13,6 +13,7 @@
 
   roles:
     - role: repositories
+      openio_repository_mirror_host: "{{ openio_mirror }}"
       openio_repository_products:
         sds:
           release: "{{ openio_sds_release }}"
