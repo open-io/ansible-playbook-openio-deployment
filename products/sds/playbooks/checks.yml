@@ -26,7 +26,7 @@
   max_fail_percentage: 0
   gather_facts: false
   environment: "{{ openio_environment }}"
-  become: false
+  become: true
 
   tasks:
     - name: Stop if even number of zookeeper hosts
@@ -46,6 +46,13 @@
         that: openio_sds_release in openio_release_supported
       ignore_errors: "{{ openio_ignore_assert_errors }}"
 
+    - name: Install python for Ansible
+      raw: "test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)"
+      changed_when: false
+
+    - name: Gathering facts
+      setup: {}
+
     - name: Reaching mirror.openio.io
       uri:
         url: "http://{{ openio_mirror }}/pub/repo/openio/sds/{{ openio_sds_release }}/"
@@ -58,13 +65,6 @@
         that:
           - request.status != -1
       ignore_errors: "{{ openio_ignore_assert_errors }}"
-
-    - name: Install python for Ansible
-      raw: "test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)"
-      changed_when: false
-
-    - name: Gathering facts
-      setup: {}
 
     - name: Get running process
       command: "/bin/ps auxww"
