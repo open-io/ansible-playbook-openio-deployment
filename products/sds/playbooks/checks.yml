@@ -157,5 +157,5 @@
         content: "{{ ansible_distribution | lower }}"
       when:
         - ansible_os_family == 'RedHat'
-        - not openio_manage_os_requirement
+        - openio_manage_os_requirement
 ...
