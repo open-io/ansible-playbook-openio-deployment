@@ -4,6 +4,7 @@
   any_errors_fatal: true
   max_fail_percentage: 0
   gather_facts: false
+  become: true
   environment: "{{ openio_environment }}"
 
   tasks:
@@ -14,13 +15,18 @@
           - ansible_version.full is version_compare('2.6.0', '<')
       ignore_errors: "{{ openio_ignore_assert_errors }}"
 
+    - name: install python-netaddr
+      package:
+        name: python-netaddr
+      when: openio_manage_os_requirement
+
 - name: Check hosts
   hosts: openio
   any_errors_fatal: true
   max_fail_percentage: 0
   gather_facts: false
   environment: "{{ openio_environment }}"
-  become: false
+  become: true
 
   tasks:
     - name: Stop if even number of zookeeper hosts
@@ -40,9 +46,16 @@
         that: openio_sds_release in openio_release_supported
       ignore_errors: "{{ openio_ignore_assert_errors }}"
 
+    - name: Install python for Ansible
+      raw: "test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)"
+      changed_when: false
+
+    - name: Gathering facts
+      setup: {}
+
     - name: Reaching mirror.openio.io
       uri:
-        url: "http://mirror.openio.io/pub/repo/openio/sds/{{ openio_sds_release }}/"
+        url: "http://{{ openio_mirror }}/pub/repo/openio/sds/{{ openio_sds_release }}/"
       register: request
       changed_when: false
       failed_when: false
@@ -52,13 +65,6 @@
         that:
           - request.status != -1
       ignore_errors: "{{ openio_ignore_assert_errors }}"
-
-    - name: Install python for Ansible
-      raw: "test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)"
-      changed_when: false
-
-    - name: Gathering facts
-      setup: {}
 
     - name: Get running process
       command: "/bin/ps auxww"
@@ -75,16 +81,48 @@
         that: ansible_distribution in openio_distribution_supported
       ignore_errors: "{{ openio_ignore_assert_errors }}"
 
+    - name: Install libselinux-python
+      package:
+        name: libselinux-python
+      when:
+        - openio_manage_os_requirement
+        - ansible_os_family == 'RedHat'
+
+    - name: Disable SELinux
+      selinux:
+        state: disabled
+      ignore_errors: true
+      failed_when: false
+      when: 
+        - ansible_selinux.status == 'disabled'
+        - ansible_os_family == 'RedHat'
+        - openio_manage_os_requirement
+
     - name: Stop if SELinux activated
       assert:
         that: ansible_selinux.status == 'disabled'
       ignore_errors: "{{ openio_ignore_assert_errors }}"
-      when: ansible_os_family == 'RedHat'
+      when: 
+        - ansible_os_family == 'RedHat'
+        - not openio_manage_os_requirement
+
+    - name: Disable AppArmor
+      service:
+        name: apparmor
+        state: stopped
+        enabled: false
+      when:
+        - ansible_os_family == 'Debian'
+        - ansible_apparmor.status != 'disabled'
+        - openio_manage_os_requirement
 
     - name: Stop if AppArmor activated
       assert:
         that: ansible_apparmor.status == 'disabled'
       ignore_errors: "{{ openio_ignore_assert_errors }}"
+      when:
+        - ansible_os_family == 'Debian'
+        - not openio_manage_os_requirement
 
     - name: Stop if firewalld activated
       assert:
@@ -93,19 +131,31 @@
 
     - name: Get APT Policy
       command: /usr/sbin/policy-rc.d
-      when: ansible_os_family == 'Debian'
       register: apt_policy
       changed_when: false
       failed_when: false
+      when: 
+        - ansible_os_family == 'Debian'
+        - openio_manage_os_requirement
 
     - name: Check APT policy
       assert:
         that: apt_policy.rc == 101
       ignore_errors: "{{ openio_ignore_assert_errors }}"
-      when: ansible_os_family == 'Debian'
+      when: 
+        - ansible_os_family == 'Debian'
+        - not openio_manage_os_requirement
 
     - name: Stop if kernel version is too low
       assert:
         that: ansible_kernel.split('-')[0] is version_compare('3.10', '>=')
       ignore_errors: "{{ openio_ignore_assert_errors }}"
+
+    - name: Fill /etc/yum/vars/contentdir
+      copy:
+        dest: /etc/yum/vars/contentdir
+        content: "{{ ansible_distribution | lower }}"
+      when:
+        - ansible_os_family == 'RedHat'
+        - openio_manage_os_requirement
 ...
