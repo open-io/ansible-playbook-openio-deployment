@@ -11,9 +11,14 @@
       setup:
       when: ansible_default_ipv4 is not defined
   tasks:
+
     - name: Install python
       package:
-        name: python-pip
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - python-pip
+        - python-setuptools
 
     - name: Install awscli
       pip:
