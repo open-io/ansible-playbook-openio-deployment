@@ -41,8 +41,4 @@ openio_manage_os_requirement: true
 
 # mirror
 openio_mirror: "mirror.openio.io"
-
-# Are the nodes containers?
-ansible_connection: ssh
-#ansible_connection: docker
 ...

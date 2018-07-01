@@ -5,11 +5,6 @@
   become: true
   environment: "{{ openio_environment }}"
 
-  pre_tasks:
-    - name: refresh facts
-      setup:
-      when: ansible_default_ipv4 is defined
-
   roles:
     - role: repositories
       openio_repository_mirror_host: "{{ openio_mirror }}"

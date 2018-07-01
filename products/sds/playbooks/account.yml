@@ -3,12 +3,8 @@
   any_errors_fatal: true
   hosts: account
   become : true
-  gather_facts: false
+  gather_facts: true
   environment: "{{ openio_environment }}"
-  pre_tasks:
-    - name: refresh facts
-      setup:
-      when: ansible_default_ipv4 is not defined
 
   roles:
     - role: account

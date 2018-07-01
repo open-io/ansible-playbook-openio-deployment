@@ -1,13 +1,8 @@
 ---
 - hosts: keystone
-  gather_facts: false
+  gather_facts: true
   become: true
   environment: "{{ openio_environment }}"
-
-  pre_tasks:
-    - name: refresh facts
-      setup:
-      when: ansible_default_ipv4 is not defined
 
   roles:
     - role: gridinit
