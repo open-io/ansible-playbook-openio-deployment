@@ -78,12 +78,14 @@ Network
   .. code-block:: shell
 
     # Ubuntu
-    sudo sudo ufw disable
+    sudo ufw disable
     sudo systemctl disable ufw.service
 
 
 Setup
 -----
+
+You only need to do this setup on the node that will install the others.
 
 -  Install Ansible (`official guide <https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html>`__)
 -  Install git for download requirements
@@ -107,3 +109,4 @@ Setup
     sudo apt install git python-netaddr -y
 
 
+Now you can install `OpenIO SDS <https://github.com/open-io/ansible-playbook-openio-deployment/tree/master/products/sds>`__
