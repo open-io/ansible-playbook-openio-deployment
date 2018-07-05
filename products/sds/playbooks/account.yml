@@ -7,6 +7,7 @@
   environment: "{{ openio_environment }}"
 
   roles:
+    - role: gridinit
     - role: account
       openio_account_namespace: "{{ namespace }}"
       openio_account_gridinit_dir: "/etc/gridinit.d/"

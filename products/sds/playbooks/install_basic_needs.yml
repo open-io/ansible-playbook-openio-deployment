@@ -12,4 +12,10 @@
         sds:
           release: "{{ openio_sds_release }}"
     - role: ntp
+
+  tasks:
+    - name: Install iproute
+      package:
+        name: "{{ 'iproute' if ansible_os_family == 'RedHat' else 'iproute2' }}"
+      
 ...
