@@ -20,7 +20,7 @@
       openio_storage_policy: "{{ namespace_storage_policy }}"
       openio_sds_sysctl_managed: "{{ openio_manage_sysctl }}"
       openio_meta1_digits: "{{ namespace_meta1_digits }}"
-      openio_zk_cluster_ip: "{{ groups['zookeeper'] | map('extract',hostvars,['ansible_' ~ openio_bind_interface,'ipv4','address']) | list }}"
+      openio_zk_cluster_ip: "{{ [] if groups.all | length == 1 else groups['zookeeper'] | map('extract',hostvars,['ansible_' ~ openio_bind_interface,'ipv4','address']) | list  }}"
       openio_redis_cluster_ip: "{{ groups['openio_redis_cluster'] | map('extract',hostvars,['ansible_' ~ openio_bind_interface,'ipv4','address']) | list }}"
       conscience_ip: "{{ namespace_conscience_address }}"
       openio_bootstrap: "{{ openio_ecd }}"
@@ -34,5 +34,7 @@
       openio_ecd_bind_interface: "{{ openio_bind_interface }}"
       openio_ecd_gridinit_file_prefix: "{{ namespace }}-"
       openio_ecd_gridinit_dir: "/etc/gridinit.d/"
-      when: openio_ecd
+      when:
+        - groups.all | length >= 3
+        - openio_ecd
 ...
