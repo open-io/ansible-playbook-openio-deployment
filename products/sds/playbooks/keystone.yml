@@ -5,7 +5,6 @@
   environment: "{{ openio_environment }}"
 
   roles:
-    - role: gridinit
     - role: memcached
       openio_memcached_namespace: "{{ namespace }}"
       openio_memcached_gridinit_dir: "/etc/gridinit.d/"
