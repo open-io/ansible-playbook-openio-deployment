@@ -38,6 +38,5 @@ default_account: openio
 openio_account_workers: 1
 openio_oioswift_workers: 1
 namespace_meta1_digits: "0"
-openio_zookeeper_parallel_gc_threads: 1
-openio_zookeeper_memory: "256M"
+openio_oioeventagent_workers: 1
 ...
