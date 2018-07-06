@@ -39,4 +39,8 @@ openio_account_workers: 1
 openio_oioswift_workers: 1
 namespace_meta1_digits: "0"
 openio_oioeventagent_workers: 1
+openio_minimal_score_for_volume_admin_bootstrap: 5
+openio_minimal_score_for_directory_bootstrap: 5
+openio_keystone_wsgi_processes: 1
+
 ...
