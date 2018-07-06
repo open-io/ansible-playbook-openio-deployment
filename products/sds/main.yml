@@ -7,13 +7,13 @@
   import_playbook: playbooks/install_basic_needs.yml
   tags: base
 
-- name: zookeeper
-  import_playbook: playbooks/zookeeper.yml
-  tags: zk
-
 - name: account
   import_playbook: playbooks/account.yml
   tags: account
+
+- name: zookeeper
+  import_playbook: playbooks/zookeeper.yml
+  tags: zk
 
 - name: SDS
   import_playbook: playbooks/openiosds.yml

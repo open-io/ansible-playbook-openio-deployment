@@ -7,7 +7,6 @@
   environment: "{{ openio_environment }}"
 
   roles:
-    - role: gridinit
     - role: zookeeper
       openio_zookeeper_namespace: "{{ namespace }}"
       openio_zookeeper_gridinit_dir: "/etc/gridinit.d/"
