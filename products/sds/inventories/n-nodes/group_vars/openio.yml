@@ -38,4 +38,7 @@ default_account: openio
 #openio_oioeventagent_workers: 1
 #openio_zookeeper_parallel_gc_threads: 1
 #openio_zookeeper_memory: "256M"
+#openio_minimal_score_for_volume_admin_bootstrap: 5
+#openio_minimal_score_for_directory_bootstrap: 5
+#openio_keystone_wsgi_processes: 1
 ...
