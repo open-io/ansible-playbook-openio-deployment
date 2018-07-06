@@ -12,7 +12,7 @@
   name: keystone
 
 - src: https://github.com/open-io/ansible-role-openio-sds
-  version: 430b388bd095441f332508328749897c352a01a1
+  version: 50ddd47d7210c6d1ab06cf106034fa6478fbb207
   name: openio-sds
 
 - src: https://github.com/open-io/ansible-role-openio-netdata
