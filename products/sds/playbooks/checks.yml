@@ -3,7 +3,7 @@
   hosts: localhost
   any_errors_fatal: true
   max_fail_percentage: 0
-  gather_facts: false
+  gather_facts: true
   become: true
   environment: "{{ openio_environment }}"
 
@@ -12,7 +12,7 @@
       assert:
         that:
           - ansible_version.full is version_compare('2.4.0', '>=')
-          - ansible_version.full is version_compare('2.7.0', '<')
+          - ansible_version.full is version_compare('2.6.0', '<')
       ignore_errors: "{{ openio_ignore_assert_errors }}"
 
     - name: install python-netaddr
