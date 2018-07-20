@@ -8,7 +8,7 @@ openio_metadata_mounts:
 # Conscience's IP NATted for this host
 #namespace_conscience_address: 192.168.1.1
 
-# Define different interface for this host:
+# Define a different interface for this host:
 #openio_bind_interface: eth2
 
 # Define an IP instead of an interface
