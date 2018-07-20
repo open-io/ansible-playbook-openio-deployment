@@ -1,3 +1,0 @@
----
-openio_zookeeper_servers: "{{ groups['zookeeper'] }}"
-...
