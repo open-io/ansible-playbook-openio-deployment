@@ -1,3 +1,4 @@
 ---
 openio_zookeeper_servers: "{{ groups['zookeeper'] }}"
+openio_zookeeper_bind_interface: "{{ openio_bind_interface }}"
 ...
