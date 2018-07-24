@@ -106,15 +106,28 @@
         - ansible_os_family == 'RedHat'
         - not openio_manage_os_requirement
 
+    - name: Check AppArmor status
+      command: 'apparmor_status'
+      register: _apparmor_status
+      changed_when: false
+      failed_when: false
+
     - name: Disable AppArmor
-      service:
-        name: apparmor
-        state: stopped
-        enabled: false
+      command: "{{ item }}"
+      register: _disable_apparmor
+      with_items:
+        - "service apparmor stop"
+        - "service apparmor teardown"
+        - "update-rc.d -f apparmor remove"
       when:
         - ansible_os_family == 'Debian'
-        - ansible_apparmor.status != 'disabled'
+        - _apparmor_status.rc == 0
         - openio_manage_os_requirement
+
+    - name: Check new AppArmor status
+      setup:
+        filter: "ansible_apparmor"
+      when: _disable_apparmor.changed
 
     - name: Stop if AppArmor activated
       assert:
