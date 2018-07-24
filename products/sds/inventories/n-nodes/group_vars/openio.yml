@@ -19,6 +19,7 @@ openio_bind_interface: "{{ ansible_default_ipv4.alias }}"
 openio_database_root_password: '#qeunovlhkojkDyzdllsdfmdoct794'
 openio_database_keystone_password: '9895bPievwmcvFqpujqixyhEcbJs_2'
 
+openio_keystone_enable: "{{ groups['keystone'] | length > 0 | bool }}"
 openio_keystone_admin_password: ADMIN_PASS
 openio_keystone_swift_password: SWIFT_PASS
 openio_keystone_demo_password: DEMO_PASS

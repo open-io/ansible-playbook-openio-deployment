@@ -44,7 +44,7 @@ openio container delete MY_CONTAINER --oio-account MY_ACCOUNT
 echo --
 
 echo
-{% if groups['keystone'] | length > 0 %}
+{% if openio_keystone_enable %}
 echo '------'
 echo '## AWS'
 

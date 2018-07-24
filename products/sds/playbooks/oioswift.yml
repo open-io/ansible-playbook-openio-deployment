@@ -13,6 +13,12 @@
   environment: "{{ openio_environment }}"
 
   roles:
+    - role: memcached
+      openio_memcached_namespace: "{{ namespace }}"
+      openio_memcached_gridinit_dir: "/etc/gridinit.d/"
+      openio_memcached_gridinit_file_prefix: "{{ namespace }}-"
+      when: not openio_keystone_enable
+
     - role: oioswift
       openio_oioswift_namespace: "{{ namespace }}"
       openio_oioswift_gridinit_dir: "/etc/gridinit.d/"
