@@ -44,9 +44,13 @@ openio container delete MY_CONTAINER --oio-account MY_ACCOUNT
 echo --
 
 echo
-
+{% if groups['keystone'] | length > 0 %}
 echo '------'
 echo '## AWS'
+
+echo -e $YELLOW AWSCli credentials used. $NC
+cat /root/.aws/credentials
+echo --
 
 echo -e $YELLOW Create a bucket 'mybucket'. $NC
 aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 mb s3://mybucket
@@ -72,5 +76,7 @@ echo --
 echo -e $YELLOW Delete your empty bucket. $NC
 aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 rb s3://mybucket
 echo
+
+{% endif %}
 
 echo Done
