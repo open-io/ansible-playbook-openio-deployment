@@ -7,65 +7,77 @@
 
   tasks:
 
-    - name: Install AWS client
-      package:
-        name: awscli
+    - name: AWS with keystone
+      block:
+        - name: Install AWS client
+          package:
+            name: awscli
 
-    - name: Creating AWS credentials
-      command: openstack ec2 credentials create -f json
-      register: cred
-      environment:
-        OS_PROJECT_DOMAIN_NAME: Default
-        OS_USER_DOMAIN_NAME: Default
-        OS_PROJECT_NAME: demo
-        OS_USERNAME: demo
-        OS_PASSWORD: "{{ openio_keystone_demo_password }}"
-        OS_AUTH_URL: "http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:35357"
-        OS_IDENTITY_API_VERSION: 3
-        OS_IMAGE_API_VERSION: 2
+        - name: Creating AWS credentials
+          command: openstack ec2 credentials create -f json
+          register: cred
+          environment:
+            OS_PROJECT_DOMAIN_NAME: Default
+            OS_USER_DOMAIN_NAME: Default
+            OS_PROJECT_NAME: demo
+            OS_USERNAME: demo
+            OS_PASSWORD: "{{ openio_keystone_demo_password }}"
+            OS_AUTH_URL: "http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:35357"
+            OS_IDENTITY_API_VERSION: 3
+            OS_IMAGE_API_VERSION: 2
    
-    - name: Create .aws folder
-      file:
-        path: /root/.aws
-        state: directory
-        mode: 0750
+        - name: Create .aws folder
+          file:
+            path: /root/.aws
+            state: directory
+            mode: 0750
 
-    - name: Set aws credentials
-      no_log: true
-      ignore_errors: true
-      copy:
-        dest: /root/.aws/credentials
-        content: |
-          [default]
-          aws_access_key_id = {{ (( cred.stdout | from_json ) | selectattr('Field', 'match', 'access') | list | first )['Value'] }}
-          aws_secret_access_key = {{ (( cred.stdout | from_json ) | selectattr('Field', 'match', 'secret') | list | first )['Value'] }} 
-      register: aws_cred_file
+        - name: Set aws credentials
+          no_log: true
+          ignore_errors: true
+          copy:
+            dest: /root/.aws/credentials
+            content: |
+              [default]
+              aws_access_key_id = {{ (( cred.stdout | from_json ) | selectattr('Field', 'match', 'access') | list | first )['Value'] }}
+              aws_secret_access_key = {{ (( cred.stdout | from_json ) | selectattr('Field', 'match', 'secret') | list | first )['Value'] }} 
+          register: aws_cred_file
 
-    - name: Set aws credentials
-      no_log: true
-      copy:
-        dest: /root/.aws/credentials
-        content: |
-          [default]
-          aws_access_key_id = {{ ( cred.stdout | from_json )['access'] }}
-          aws_secret_access_key = {{ ( cred.stdout | from_json )['secret'] }}
-      when: aws_cred_file | failed
-          
-    - name: Configure environment for test
+        - name: Set aws credentials
+          no_log: true
+          copy:
+            dest: /root/.aws/credentials
+            content: |
+              [default]
+              aws_access_key_id = {{ ( cred.stdout | from_json )['access'] }}
+              aws_secret_access_key = {{ ( cred.stdout | from_json )['secret'] }}
+          when: aws_cred_file | failed
+
+        - name: Configure environment for AWS test
+          no_log: true
+          copy:
+            dest: "{{ item.path }}"
+            content: "{{ item.content }}"
+          with_items: 
+            - path : /root/.aws/config
+              content: |
+                [default]
+                region = RegionOne
+                s3 =
+                  signature_version = s3
+
+      when: openio_keystone_enable
+
+    - name: Configure environment for OPENIO test
       no_log: true
       copy:
         dest: "{{ item.path }}"
         content: "{{ item.content }}"
       with_items: 
-        - path : /root/.aws/config
-          content: |
-            [default]
-            region = RegionOne
-            s3 =
-              signature_version = s3
         - path: /etc/profile.d/openio.sh
           content: |
             export OIO_NS={{ namespace }}
+            {% if openio_keystone_enable %}
             export OS_PROJECT_DOMAIN_NAME=Default
             export OS_USER_DOMAIN_NAME=Default
             export OS_PROJECT_NAME=demo
@@ -74,6 +86,7 @@
             export OS_AUTH_URL=http://{{ hostvars[inventory_hostname]['ansible_' + openio_keystone_bind_interface]['ipv4']['address'] }}:35357
             export OS_IDENTITY_API_VERSION=3
             export OS_IMAGE_API_VERSION=2
+            {% endif %}
 
     - name: Add script for tests in /root/checks.sh
       template:

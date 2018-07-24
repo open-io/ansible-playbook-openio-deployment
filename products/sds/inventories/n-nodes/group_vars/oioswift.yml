@@ -1,5 +1,12 @@
 ---
 openio_oioswift_bind_interface:  "{{ openio_bind_interface }}"
 openio_oioswift_sds_proxy_namespace: "{{ namespace }}"
+# Keystoneauth
 openio_oioswift_pipeline: "{{ pipeline_keystone }}"
+
+# Tempauth (when there's no node in the group "keystone")
+#openio_oioswift_pipeline: "{{ pipeline_tempauth }}"
+#openio_oioswift_filter_tempauth:
+#  use: "egg:swift#tempauth"
+#  user_demo_demo: "DEMO_PASS .admin"
 ...
