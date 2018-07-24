@@ -36,7 +36,7 @@
   name: account
 
 - src: https://github.com/open-io/ansible-role-openio-zookeeper
-  version: a0cb4fc3d6b2210c605c6c99fe5df1fa6077cb01
+  version: f48fa03a9a32aac08895afa7cba1a6d10883a6c9
   name: zookeeper
 
 - src: https://github.com/geerlingguy/ansible-role-ntp

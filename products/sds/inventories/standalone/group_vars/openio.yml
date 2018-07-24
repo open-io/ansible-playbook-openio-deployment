@@ -4,7 +4,6 @@ openio_sds_release: "18.04"
 
 # Namespace
 namespace: OPENIO
-namespace_conscience_address: "{{ groups['openio_conscience'] | map('extract',hostvars,['ansible_' ~ openio_bind_interface,'ipv4','address']) | list | first }}"
 #namespace_meta1_digits: "2"
 # Replication
 namespace_storage_policy: SINGLE
