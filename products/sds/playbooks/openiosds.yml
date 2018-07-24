@@ -6,6 +6,10 @@
   gather_facts: true
   environment: "{{ openio_environment }}"
 
+  pre_tasks:
+    - set_fact:
+        openio_address: "{{ hostvars[inventory_hostname]['ansible_' + openio_bind_interface]['ipv4']['address'] }}"
+
   roles:
     - role: openio-sds
       openio_sds_version: "{{ openio_sds_release }}"
@@ -13,12 +17,12 @@
       openio_storage_policy: "{{ namespace_storage_policy }}"
       openio_sds_sysctl_managed: "{{ openio_manage_sysctl }}"
       openio_meta1_digits: "{{ namespace_meta1_digits }}"
-      openio_zk_cluster_ip: "{{ [] if groups.all | length == 1 else groups['zookeeper'] | map('extract',hostvars,['ansible_' ~ openio_bind_interface,'ipv4','address']) | list  }}"
-      openio_redis_cluster_ip: "{{ groups['openio_redis_cluster'] | map('extract',hostvars,['ansible_' ~ openio_bind_interface,'ipv4','address']) | list }}"
-      conscience_ip: "{{ namespace_conscience_address }}"
+      openio_zk_cluster_ip: "{{ [] if groups.all | length == 1 else groups['zookeeper'] | map('extract',hostvars,['openio_address']) | list }}"
+      openio_redis_cluster_ip: "{{ groups['openio_redis_cluster'] | map('extract',hostvars,['openio_address']) | list }}"
+      conscience_ip: "{{ groups['openio_conscience'] | map('extract',hostvars,['openio_address']) | list | first }}"
       openio_bootstrap: "{{ openio_ecd }}"
-      openio_network_private_ipaddress: "{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}"
-      openio_network_public_ipaddress: "{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}"
+      openio_network_private_ipaddress: "{{ openio_address }}"
+      openio_network_public_ipaddress: "{{ openio_address }}"
       openio_sds_default_account: "{{ default_account }}"
       openio_chunk_size: "{{ (namespace_chunk_size_megabytes | int) * 1024 * 1024 }}"
       openio_zk_inventory_group_name: zookeeper
