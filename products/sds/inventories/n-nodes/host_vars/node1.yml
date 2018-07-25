@@ -14,7 +14,6 @@ openio_metadata_mounts:
 # Define an IP instead of an interface
 #openio_account_bind_address: 10.0.0.1
 #openio_bind_address: 10.0.0.1
-#openio_keystone_bind_address: 10.0.0.1
 #openio_memcached_bind_address: 10.0.0.1
 #openio_zookeeper_bind_address: 10.0.0.1
 ...

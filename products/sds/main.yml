@@ -19,10 +19,6 @@
   import_playbook: playbooks/openiosds.yml
   tags: sds
 
-- name: Keystone
-  import_playbook: playbooks/keystone.yml
-  tags: keystone
-
 - name: Swift
   import_playbook: playbooks/oioswift.yml
   tags: swift

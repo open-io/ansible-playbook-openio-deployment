@@ -71,68 +71,67 @@ Sample output:
   /root
   [root@5bdc8fbc3ceb ~]# ./checks.sh
   ## OPENIO
-   Status of services.
+   Status of services. 
   KEY                       STATUS      PID GROUP
-  OPENIO-account-0          UP         5604 OPENIO,account,0
-  OPENIO-beanstalkd-1       UP         7513 OPENIO,beanstalkd,beanstalkd-1
-  OPENIO-conscienceagent-1  UP         7498 OPENIO,conscienceagent,conscienceagent-1
-  OPENIO-ecd-0              UP         9633 OPENIO,ecd,0
-  OPENIO-keystone-0.0       UP        13469 OPENIO,keystone,0,keystone-wsgi-public
-  OPENIO-keystone-0.1       UP        13454 OPENIO,keystone,0,keystone-wsgi-admin
-  OPENIO-memcached-0        UP        10415 OPENIO,memcached,0
-  OPENIO-meta0-1            UP         8388 OPENIO,meta0,meta0-1
-  OPENIO-meta1-1            UP         8412 OPENIO,meta1,meta1-1
-  OPENIO-meta2-1            UP         7602 OPENIO,meta2,meta2-1
-  OPENIO-oio-blob-indexer-1 UP         7603 OPENIO,oio-blob-indexer,oio-blob-indexer-1
-  OPENIO-oio-event-agent-0  UP         7504 OPENIO,oio-event-agent,oio-event-agent-0
-  OPENIO-oioproxy-1         UP         7697 OPENIO,oioproxy,oioproxy-1
-  OPENIO-oioswift-0         UP        14856 OPENIO,oioswift,0
-  OPENIO-rawx-1             UP         7585 OPENIO,rawx,rawx-1
-  OPENIO-rdir-1             UP         7689 OPENIO,rdir,rdir-1
-  OPENIO-redis-1            UP         7573 OPENIO,redis,redis-1
-  OPENIO-redissentinel-1    UP         7558 OPENIO,redissentinel,redissentinel-1
-  OPENIO-zookeeper-0        UP         4811 OPENIO,zookeeper,0
+  OPENIO-account-0          UP         2256 OPENIO,account,0
+  OPENIO-beanstalkd-1       UP         4632 OPENIO,beanstalkd,beanstalkd-1
+  OPENIO-conscience-1       UP         4809 OPENIO,conscience,conscience-1
+  OPENIO-conscienceagent-1  UP         4619 OPENIO,conscienceagent,conscienceagent-1
+  OPENIO-ecd-0              UP         7055 OPENIO,ecd,0
+  OPENIO-memcached-0        UP         7466 OPENIO,memcached,0
+  OPENIO-meta0-1            UP         5605 OPENIO,meta0,meta0-1
+  OPENIO-meta1-1            UP         5581 OPENIO,meta1,meta1-1
+  OPENIO-meta2-1            UP         4798 OPENIO,meta2,meta2-1
+  OPENIO-oio-blob-indexer-1 UP         4788 OPENIO,oio-blob-indexer,oio-blob-indexer-1
+  OPENIO-oio-event-agent-0  UP         4810 OPENIO,oio-event-agent,oio-event-agent-0
+  OPENIO-oioproxy-1         UP         4843 OPENIO,oioproxy,oioproxy-1
+  OPENIO-oioswift-0         UP         8959 OPENIO,oioswift,0
+  OPENIO-rawx-1             UP         4702 OPENIO,rawx,rawx-1
+  OPENIO-rdir-1             UP         4813 OPENIO,rdir,rdir-1
+  OPENIO-redis-1            UP         4714 OPENIO,redis,redis-1
+  OPENIO-redissentinel-1    UP         4686 OPENIO,redissentinel,redissentinel-1
+  OPENIO-zookeeper-0        UP         3595 OPENIO,zookeeper,0
   --
-   Display the cluster status.
-  +---------+-----------------+------------+---------------------------------+--------------+-------+------+-------+
-  | Type    | Addr            | Service Id | Volume                          | Location     | Slots | Up   | Score |
-  +---------+-----------------+------------+---------------------------------+--------------+-------+------+-------+
-  | account | 172.17.0.2:6009 | n/a        | n/a                             | 5bdc8fbc3ceb | n/a   | True |    95 |
-  | account | 172.17.0.3:6009 | n/a        | n/a                             | 60b8ffa564c4 | n/a   | True |    95 |
-  | account | 172.17.0.4:6009 | n/a        | n/a                             | 3b7bf6e74c6c | n/a   | True |    95 |
-  | meta0   | 172.17.0.2:6001 | n/a        | /var/lib/oio/sds/OPENIO/meta0-1 | 5bdc8fbc3ceb | n/a   | True |    97 |
-  | meta0   | 172.17.0.3:6001 | n/a        | /var/lib/oio/sds/OPENIO/meta0-1 | 60b8ffa564c4 | n/a   | True |    97 |
-  | meta0   | 172.17.0.4:6001 | n/a        | /var/lib/oio/sds/OPENIO/meta0-1 | 3b7bf6e74c6c | n/a   | True |    97 |
-  | meta1   | 172.17.0.2:6111 | n/a        | /var/lib/oio/sds/OPENIO/meta1-1 | 5bdc8fbc3ceb | n/a   | True |    72 |
-  | meta1   | 172.17.0.3:6111 | n/a        | /var/lib/oio/sds/OPENIO/meta1-1 | 60b8ffa564c4 | n/a   | True |    72 |
-  | meta1   | 172.17.0.4:6111 | n/a        | /var/lib/oio/sds/OPENIO/meta1-1 | 3b7bf6e74c6c | n/a   | True |    72 |
-  | meta2   | 172.17.0.2:6121 | n/a        | /var/lib/oio/sds/OPENIO/meta2-1 | 5bdc8fbc3ceb | n/a   | True |    72 |
-  | meta2   | 172.17.0.3:6121 | n/a        | /var/lib/oio/sds/OPENIO/meta2-1 | 60b8ffa564c4 | n/a   | True |    72 |
-  | meta2   | 172.17.0.4:6121 | n/a        | /var/lib/oio/sds/OPENIO/meta2-1 | 3b7bf6e74c6c | n/a   | True |    72 |
-  | rawx    | 172.17.0.2:6201 | n/a        | /var/lib/oio/sds/OPENIO/rawx-1  | 5bdc8fbc3ceb | n/a   | True |    72 |
-  | rawx    | 172.17.0.3:6201 | n/a        | /var/lib/oio/sds/OPENIO/rawx-1  | 60b8ffa564c4 | n/a   | True |    72 |
-  | rawx    | 172.17.0.4:6201 | n/a        | /var/lib/oio/sds/OPENIO/rawx-1  | 3b7bf6e74c6c | n/a   | True |    72 |
-  | rdir    | 172.17.0.2:6301 | n/a        | /var/lib/oio/sds/OPENIO/rdir-1  | 5bdc8fbc3ceb | n/a   | True |    95 |
-  | rdir    | 172.17.0.3:6301 | n/a        | /var/lib/oio/sds/OPENIO/rdir-1  | 60b8ffa564c4 | n/a   | True |    95 |
-  | rdir    | 172.17.0.4:6301 | n/a        | /var/lib/oio/sds/OPENIO/rdir-1  | 3b7bf6e74c6c | n/a   | True |    95 |
-  +---------+-----------------+------------+---------------------------------+--------------+-------+------+-------+
+   Display the cluster status. 
+  +---------+-----------------+------------+---------------------------------+----------+-------+------+-------+
+  | Type    | Addr            | Service Id | Volume                          | Location | Slots | Up   | Score |
+  +---------+-----------------+------------+---------------------------------+----------+-------+------+-------+
+  | account | 172.17.0.3:6009 | n/a        | n/a                             | node2    | n/a   | True |    99 |
+  | account | 172.17.0.4:6009 | n/a        | n/a                             | node3    | n/a   | True |    95 |
+  | account | 172.17.0.2:6009 | n/a        | n/a                             | node1    | n/a   | True |    95 |
+  | meta0   | 172.17.0.3:6001 | n/a        | /var/lib/oio/sds/OPENIO/meta0-1 | node2    | n/a   | True |    97 |
+  | meta0   | 172.17.0.4:6001 | n/a        | /var/lib/oio/sds/OPENIO/meta0-1 | node3    | n/a   | True |    97 |
+  | meta0   | 172.17.0.2:6001 | n/a        | /var/lib/oio/sds/OPENIO/meta0-1 | node1    | n/a   | True |    97 |
+  | meta1   | 172.17.0.3:6111 | n/a        | /var/lib/oio/sds/OPENIO/meta1-1 | node2    | n/a   | True |    68 |
+  | meta1   | 172.17.0.4:6111 | n/a        | /var/lib/oio/sds/OPENIO/meta1-1 | node3    | n/a   | True |    68 |
+  | meta1   | 172.17.0.2:6111 | n/a        | /var/lib/oio/sds/OPENIO/meta1-1 | node1    | n/a   | True |    68 |
+  | meta2   | 172.17.0.3:6121 | n/a        | /var/lib/oio/sds/OPENIO/meta2-1 | node2    | n/a   | True |    68 |
+  | meta2   | 172.17.0.4:6121 | n/a        | /var/lib/oio/sds/OPENIO/meta2-1 | node3    | n/a   | True |    68 |
+  | meta2   | 172.17.0.2:6121 | n/a        | /var/lib/oio/sds/OPENIO/meta2-1 | node1    | n/a   | True |    68 |
+  | rawx    | 172.17.0.3:6201 | n/a        | /var/lib/oio/sds/OPENIO/rawx-1  | node2    | n/a   | True |    68 |
+  | rawx    | 172.17.0.4:6201 | n/a        | /var/lib/oio/sds/OPENIO/rawx-1  | node3    | n/a   | True |    68 |
+  | rawx    | 172.17.0.2:6201 | n/a        | /var/lib/oio/sds/OPENIO/rawx-1  | node1    | n/a   | True |    68 |
+  | rdir    | 172.17.0.3:6301 | n/a        | /var/lib/oio/sds/OPENIO/rdir-1  | node2    | n/a   | True |    95 |
+  | rdir    | 172.17.0.4:6301 | n/a        | /var/lib/oio/sds/OPENIO/rdir-1  | node3    | n/a   | True |    95 |
+  | rdir    | 172.17.0.2:6301 | n/a        | /var/lib/oio/sds/OPENIO/rdir-1  | node1    | n/a   | True |    95 |
+  +---------+-----------------+------------+---------------------------------+----------+-------+------+-------+
   --
-   Upload the /etc/passwd into the bucket MY_CONTAINER of the MY_ACCOUNT project.
+   Upload the /etc/passwd into the bucket MY_CONTAINER of the MY_ACCOUNT project. 
   +--------+------+----------------------------------+--------+
   | Name   | Size | Hash                             | Status |
   +--------+------+----------------------------------+--------+
-  | passwd | 1273 | 217F67C9C35A6C84B58B852DBF0C4BA2 | Ok     |
+  | passwd | 1246 | D39F219BF5875D561DAFB2B789CD1C6C | Ok     |
   +--------+------+----------------------------------+--------+
   --
-   Get some informations about your object.
+   Get some informations about your object. 
   +----------------+--------------------------------------------------------------------+
   | Field          | Value                                                              |
   +----------------+--------------------------------------------------------------------+
   | account        | MY_ACCOUNT                                                         |
   | base_name      | 7B1F1716BE955DE2D677B68819836E4F75FD2424F6D22DB60F9F2BB40331A741.1 |
-  | bytes_usage    | 1.273KB                                                            |
+  | bytes_usage    | 1.246KB                                                            |
   | container      | MY_CONTAINER                                                       |
-  | ctime          | 1530454404                                                         |
+  | ctime          | 1532587799                                                         |
   | max_versions   | Namespace default                                                  |
   | objects        | 1                                                                  |
   | quota          | Namespace default                                                  |
@@ -140,27 +139,27 @@ Sample output:
   | storage_policy | Namespace default                                                  |
   +----------------+--------------------------------------------------------------------+
   --
-   List object in container.
+   List object in container. 
   +--------+------+----------------------------------+------------------+
   | Name   | Size | Hash                             |          Version |
   +--------+------+----------------------------------+------------------+
-  | passwd | 1273 | 217F67C9C35A6C84B58B852DBF0C4BA2 | 1530454404437338 |
+  | passwd | 1246 | D39F219BF5875D561DAFB2B789CD1C6C | 1532587799384608 |
   +--------+------+----------------------------------+------------------+
   --
-   Find the services involved for your container.
+   Find the services involved for your container. 
   +-----------+--------------------------------------------------------------------+
   | Field     | Value                                                              |
   +-----------+--------------------------------------------------------------------+
   | account   | MY_ACCOUNT                                                         |
   | base_name | 7B1F1716BE955DE2D677B68819836E4F75FD2424F6D22DB60F9F2BB40331A741.1 |
-  | meta0     | 172.17.0.2:6001, 172.17.0.3:6001, 172.17.0.4:6001                  |
+  | meta0     | 172.17.0.3:6001, 172.17.0.4:6001, 172.17.0.2:6001                  |
   | meta1     | 172.17.0.2:6111, 172.17.0.3:6111, 172.17.0.4:6111                  |
-  | meta2     | 172.17.0.4:6121, 172.17.0.3:6121, 172.17.0.2:6121                  |
+  | meta2     | 172.17.0.3:6121, 172.17.0.4:6121, 172.17.0.2:6121                  |
   | name      | MY_CONTAINER                                                       |
   | status    | Enabled                                                            |
   +-----------+--------------------------------------------------------------------+
   --
-   Save the data stored in the given object to the --file destination.
+   Save the data stored in the given object to the --file destination. 
   root:x:0:0:root:/root:/bin/bash
   bin:x:1:1:bin:/bin:/sbin/nologin
   daemon:x:2:2:daemon:/sbin:/sbin/nologin
@@ -172,32 +171,37 @@ Sample output:
   mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
   operator:x:11:0:operator:/root:/sbin/nologin
   --
-   Delete your object.
+   Delete your object. 
   +--------+---------+
   | Name   | Deleted |
   +--------+---------+
   | passwd | True    |
   +--------+---------+
   --
-   Delete your empty container.
+   Delete your empty container. 
   --
-
+  
   ------
   ## AWS
-   Create a bucket mybucket.
+   AWSCli credentials used. 
+  [default]
+  aws_access_key_id = demo:demo
+  aws_secret_access_key = DEMO_PASS
+  --
+   Create a bucket mybucket. 
   make_bucket: mybucket
   --
-   Upload the /etc/passwd into the bucket mybucket.
-  upload: ../etc/passwd to s3://mybucket/passwd
+   Upload the /etc/passwd into the bucket mybucket. 
+  upload: ../etc/passwd to s3://mybucket/passwd                   
   --
-   List your buckets.
-  2018-07-01 16:13:30    1.2 KiB passwd
-
+   List your buckets. 
+  2018-07-26 08:50:07    1.2 KiB passwd
+  
   Total Objects: 1
      Total Size: 1.2 KiB
   --
-   Save the data stored in the given object into the file given.
-  download: s3://mybucket/passwd to ../tmp/passwd.aws
+   Save the data stored in the given object into the file given. 
+  download: s3://mybucket/passwd to ../tmp/passwd.aws            
   root:x:0:0:root:/root:/bin/bash
   bin:x:1:1:bin:/bin:/sbin/nologin
   daemon:x:2:2:daemon:/sbin:/sbin/nologin
@@ -209,13 +213,14 @@ Sample output:
   mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
   operator:x:11:0:operator:/root:/sbin/nologin
   --
-   Delete your object.
+   Delete your object. 
   delete: s3://mybucket/passwd
   --
-   Delete your empty bucket.
+   Delete your empty bucket. 
   remove_bucket: mybucket
-
+  
   Done
+
 
 Low capacity nodes
 ==================
