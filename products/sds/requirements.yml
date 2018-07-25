@@ -7,10 +7,6 @@
   version: e168647c8e2ec02269e3138be880eb00952226ba
   name: gridinit
 
-- src: https://github.com/open-io/ansible-role-openio-keystone
-  version: aaeabeb94c42924dadd34442ee6f049948766f32
-  name: keystone
-
 - src: https://github.com/open-io/ansible-role-openio-sds
   version: 50ddd47d7210c6d1ab06cf106034fa6478fbb207
   name: openio-sds
@@ -24,7 +20,7 @@
   name: memcached
 
 - src: https://github.com/open-io/ansible-role-openio-oioswift.git
-  version: 5569a6629e035fbc607254e8274d8d9cb6a6616f
+  version: b7bc199a7c724712b69d3eaa25a37c658ff191a2
   name: oioswift
 
 - src: https://github.com/open-io/ansible-role-openio-ecd.git

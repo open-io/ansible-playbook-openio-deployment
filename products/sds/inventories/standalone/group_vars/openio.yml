@@ -18,14 +18,12 @@ openio_replicas: 1
 # Network
 openio_bind_interface: "{{ ansible_default_ipv4.alias }}"
 
-# Password
-openio_database_root_password: '#qeunovlhkojkDyzdllsdfmdoct794'
-openio_database_keystone_password: '9895bPievwmcvFqpujqixyhEcbJs_2'
-
-openio_keystone_enable: "{{ groups['keystone'] | length > 0 | bool }}"
-openio_keystone_admin_password: ADMIN_PASS
-openio_keystone_swift_password: SWIFT_PASS
-openio_keystone_demo_password: DEMO_PASS
+# S3 users
+openio_oioswift_users:
+  - name: "demo:demo"
+    password: "DEMO_PASS"
+    roles:
+      - admin
 
 # sysctl
 openio_manage_sysctl: true
@@ -41,6 +39,4 @@ namespace_meta1_digits: "0"
 openio_oioeventagent_workers: 1
 openio_minimal_score_for_volume_admin_bootstrap: 5
 openio_minimal_score_for_directory_bootstrap: 5
-openio_keystone_wsgi_processes: 1
-
 ...

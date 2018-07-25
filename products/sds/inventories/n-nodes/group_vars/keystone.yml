@@ -1,6 +1,0 @@
----
-openio_keystone_nodes_group: keystone
-openio_keystone_bind_interface: "{{ openio_bind_interface }}"
-openio_keystone_bootstrap_all_nodes: true
-openio_memcached_bind_interface: "{{ openio_bind_interface }}"
-...
