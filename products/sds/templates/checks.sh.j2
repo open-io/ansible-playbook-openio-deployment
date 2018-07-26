@@ -53,28 +53,28 @@ cat /root/.aws/credentials
 echo --
 
 echo -e $YELLOW Create a bucket 'mybucket'. $NC
-aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 mb s3://mybucket
+aws --endpoint-url http://{{ hostvars[inventory_hostname]['openio_bind_address'] }}:6007 --no-verify-ssl s3 mb s3://mybucket
 echo --
 
 echo -e $YELLOW Upload the '/etc/passwd' into the bucket 'mybucket'. $NC
-aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 cp /etc/passwd s3://mybucket
+aws --endpoint-url http://{{ hostvars[inventory_hostname]['openio_bind_address'] }}:6007 --no-verify-ssl s3 cp /etc/passwd s3://mybucket
 echo --
 
 echo -e $YELLOW List your buckets. $NC
-aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 ls s3://mybucket --recursive --human-readable --summarize
+aws --endpoint-url http://{{ hostvars[inventory_hostname]['openio_bind_address'] }}:6007 --no-verify-ssl s3 ls s3://mybucket --recursive --human-readable --summarize
 echo --
 
 echo -e $YELLOW Save the data stored in the given object into the file given. $NC
-aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 cp s3://mybucket/passwd /tmp/passwd.aws
+aws --endpoint-url http://{{ hostvars[inventory_hostname]['openio_bind_address'] }}:6007 --no-verify-ssl s3 cp s3://mybucket/passwd /tmp/passwd.aws
 head /tmp/passwd.aws
 echo --
 
 echo -e $YELLOW Delete your object. $NC
-aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 rm s3://mybucket/passwd
+aws --endpoint-url http://{{ hostvars[inventory_hostname]['openio_bind_address'] }}:6007 --no-verify-ssl s3 rm s3://mybucket/passwd
 echo --
 
 echo -e $YELLOW Delete your empty bucket. $NC
-aws --endpoint-url http://{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}:6007 --no-verify-ssl s3 rb s3://mybucket
+aws --endpoint-url http://{{ hostvars[inventory_hostname]['openio_bind_address'] }}:6007 --no-verify-ssl s3 rb s3://mybucket
 echo
 
 echo Done
