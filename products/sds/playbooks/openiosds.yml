@@ -7,8 +7,9 @@
   environment: "{{ openio_environment }}"
 
   pre_tasks:
-    - set_fact:
-        openio_address: "{{ hostvars[inventory_hostname]['ansible_' + openio_bind_interface]['ipv4']['address'] }}"
+    - name: set openio_bind_address as fact
+      set_fact:
+        openio_bind_address: "{{ openio_bind_address }}"
 
   roles:
     - role: openio-sds
@@ -17,18 +18,18 @@
       openio_storage_policy: "{{ namespace_storage_policy }}"
       openio_sds_sysctl_managed: "{{ openio_manage_sysctl }}"
       openio_meta1_digits: "{{ namespace_meta1_digits }}"
-      openio_zk_cluster_ip: "{{ [] if groups.all | length == 1 else groups['zookeeper'] | map('extract',hostvars,['openio_address']) | list }}"
-      openio_redis_cluster_ip: "{{ groups['openio_redis_cluster'] | map('extract',hostvars,['openio_address']) | list }}"
-      conscience_ip: "{{ groups['openio_conscience'] | map('extract',hostvars,['openio_address']) | list | first }}"
+      openio_zk_cluster_ip: "{{ [] if groups.all | length == 1 else groups['zookeeper'] | map('extract',hostvars,['openio_bind_address']) | list }}"
+      openio_redis_cluster_ip: "{{ groups['openio_redis_cluster'] | map('extract',hostvars,['openio_bind_address']) | list }}"
+      conscience_ip: "{{ groups['openio_conscience'] | map('extract',hostvars,['openio_bind_address']) | list | first }}"
       openio_bootstrap: "{{ openio_ecd }}"
-      openio_network_private_ipaddress: "{{ openio_address }}"
-      openio_network_public_ipaddress: "{{ openio_address }}"
+      openio_network_private_ipaddress: "{{ openio_bind_address }}"
+      openio_network_public_ipaddress: "{{ openio_bind_address }}"
       openio_sds_default_account: "{{ default_account }}"
       openio_chunk_size: "{{ (namespace_chunk_size_megabytes | int) * 1024 * 1024 }}"
       openio_zk_inventory_group_name: zookeeper
 
     - role: ecd
-      openio_ecd_bind_interface: "{{ openio_bind_interface }}"
+      openio_ecd_bind_address: "{{ openio_bind_address }}"
       openio_ecd_gridinit_file_prefix: "{{ namespace }}-"
       openio_ecd_gridinit_dir: "/etc/gridinit.d/"
       when:

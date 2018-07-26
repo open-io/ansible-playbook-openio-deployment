@@ -14,6 +14,7 @@ openio_ecd: true
 
 # Network
 openio_bind_interface: "{{ ansible_default_ipv4.alias }}"
+openio_bind_address: "{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}"
 
 # S3 users
 openio_oioswift_users:

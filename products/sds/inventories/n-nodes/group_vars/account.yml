@@ -1,6 +1,6 @@
 ---
-openio_account_bind_interface: "{{ openio_bind_interface }}"
+openio_account_bind_address: "{{ openio_bind_address }}"
 openio_account_sentinels_hosts: "{{ groups['openio_redis_cluster'] \
-  | map('extract', hostvars, ['ansible_'  + openio_bind_interface, 'ipv4', 'address']) \
+  | map('extract', hostvars, ['openio_bind_address']) \
     | join(':6012,') }}:6012"
 ...
