@@ -10,7 +10,6 @@ openio_distribution_supported:
   - Ubuntu
 
 openio_release_supported:
-  - "17.04"
   - "18.04"
   - "18.10"
 
