@@ -93,7 +93,7 @@
         state: disabled
       ignore_errors: true
       failed_when: false
-      when: 
+      when:
         - ansible_selinux.status == 'disabled'
         - ansible_os_family == 'RedHat'
         - openio_manage_os_requirement
@@ -102,7 +102,7 @@
       assert:
         that: ansible_selinux.status == 'disabled'
       ignore_errors: "{{ openio_ignore_assert_errors }}"
-      when: 
+      when:
         - ansible_os_family == 'RedHat'
         - not openio_manage_os_requirement
 
@@ -147,7 +147,7 @@
       register: apt_policy
       changed_when: false
       failed_when: false
-      when: 
+      when:
         - ansible_os_family == 'Debian'
         - openio_manage_os_requirement
 
@@ -155,7 +155,7 @@
       assert:
         that: apt_policy.rc == 101
       ignore_errors: "{{ openio_ignore_assert_errors }}"
-      when: 
+      when:
         - ansible_os_family == 'Debian'
         - not openio_manage_os_requirement
 

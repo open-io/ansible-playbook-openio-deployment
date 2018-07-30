@@ -2,15 +2,15 @@
 - name: Install Zookeeper
   any_errors_fatal: true
   hosts: zookeeper
-  become : true
+  become: true
   gather_facts: true
   environment: "{{ openio_environment }}"
 
   pre_tasks:
     - name: set openio_bind_address as fact
-      set_fact: 
+      set_fact:
         openio_bind_address: "{{ openio_bind_address }}"
- 
+
   roles:
     - role: zookeeper
       openio_zookeeper_namespace: "{{ namespace }}"

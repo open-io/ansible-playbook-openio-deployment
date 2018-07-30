@@ -1,11 +1,11 @@
 ---
 - name: Configure node for test
   hosts: backs
-  become : true
+  become: true
   gather_facts: true
   environment: "{{ openio_environment }}"
 
-  pre_tasks:                                                                                                            
+  pre_tasks:
     - name: set openio_bind_address as fact
       set_fact:
         openio_bind_address: "{{ openio_bind_address }}"
@@ -45,8 +45,8 @@
              #multipart_threshold = 50MB
              #multipart_chunksize = 10MB
           region = us-east-1
-      with_items: 
-        - path : /root/.aws/config
+      with_items:
+        - path: /root/.aws/config
           content: |
             [default]
             s3 =

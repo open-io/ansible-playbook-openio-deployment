@@ -9,7 +9,7 @@ namespace_meta1_digits: "2"
 namespace_storage_policy: THREECOPIES
 # Parts of objects
 namespace_chunk_size_megabytes: 100
-# Erasure coding 
+# Erasure coding
 openio_ecd: true
 
 # Network
@@ -39,4 +39,5 @@ default_account: openio
 #openio_zookeeper_memory: "256M"
 #openio_minimal_score_for_volume_admin_bootstrap: 5
 #openio_minimal_score_for_directory_bootstrap: 5
+# ---- End Low memory nodes
 ...

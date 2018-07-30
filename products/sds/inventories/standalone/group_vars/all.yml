@@ -40,6 +40,4 @@ openio_manage_os_requirement: true
 
 # mirror
 openio_mirror: "mirror.openio.io"
-
-openio_manage_os_requirement: true 
 ...

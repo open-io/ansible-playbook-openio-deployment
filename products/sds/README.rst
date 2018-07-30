@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/open-io/ansible-playbook-openio-deployment.svg?branch=master
+    :target: https://travis-ci.org/open-io/ansible-playbook-openio-deployment
+
 Architecture
 ============
 
