@@ -1,6 +1,7 @@
 ---
-openio_oioswift_bind_address:  "{{ openio_bind_address }}"
+openio_oioswift_bind_address: "{{ openio_bind_address }}"
 openio_oioswift_sds_proxy_namespace: "{{ namespace }}"
 openio_oioswift_pipeline: "{{ pipeline_tempauth }}"
-openio_oioswift_filter_tempauth: "{{ {'use': 'egg:oioswift#tempauth'} | combine(openio_oioswift_users | dict_to_tempauth) }}"
+openio_oioswift_filter_tempauth:
+  "{{ {'use': 'egg:oioswift#tempauth'} | combine(openio_oioswift_users | dict_to_tempauth) }}"
 ...

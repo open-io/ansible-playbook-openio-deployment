@@ -2,7 +2,7 @@
 - name: Install and configure OpenIO SDS
   any_errors_fatal: true
   hosts: openio
-  become : true
+  become: true
   gather_facts: true
   environment: "{{ openio_environment }}"
 
@@ -18,9 +18,12 @@
       openio_storage_policy: "{{ namespace_storage_policy }}"
       openio_sds_sysctl_managed: "{{ openio_manage_sysctl }}"
       openio_meta1_digits: "{{ namespace_meta1_digits }}"
-      openio_zk_cluster_ip: "{{ [] if groups.all | length == 1 else groups['zookeeper'] | map('extract',hostvars,['openio_bind_address']) | list }}"
-      openio_redis_cluster_ip: "{{ groups['openio_redis_cluster'] | map('extract',hostvars,['openio_bind_address']) | list }}"
-      conscience_ip: "{{ groups['openio_conscience'] | map('extract',hostvars,['openio_bind_address']) | list | first }}"
+      openio_zk_cluster_ip: "{{ [] if groups.all | length == 1 else groups['zookeeper'] \
+        | map('extract',hostvars,['openio_bind_address']) | list }}"
+      openio_redis_cluster_ip: "{{ groups['openio_redis_cluster'] \
+        | map('extract',hostvars,['openio_bind_address']) | list }}"
+      conscience_ip: "{{ groups['openio_conscience'] \
+        | map('extract',hostvars,['openio_bind_address']) | list | first }}"
       openio_bootstrap: "{{ openio_ecd }}"
       openio_network_private_ipaddress: "{{ openio_bind_address }}"
       openio_network_public_ipaddress: "{{ openio_bind_address }}"
