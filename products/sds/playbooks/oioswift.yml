@@ -2,7 +2,7 @@
 - name: Install and configure OpenIO Swift
   any_errors_fatal: true
   hosts: oioswift
-  become : true
+  become: true
   gather_facts: true
   environment: "{{ openio_environment }}"
 

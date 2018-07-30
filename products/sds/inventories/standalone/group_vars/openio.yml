@@ -9,7 +9,7 @@ namespace: OPENIO
 namespace_storage_policy: SINGLE
 # Parts of objects
 namespace_chunk_size_megabytes: 100
-# Erasure coding 
+# Erasure coding
 openio_ecd: true
 # No  replication on single node
 openio_service_update_policy: "{'meta2'=>'KEEP|1|1|','sqlx'=>'KEEP|1|1|','rdir'=>'KEEP|1|1|user_is_a_service=rawx'}"
