@@ -1,0 +1,7 @@
+# Test playbook
+---
+
+- hosts: all
+  become: true
+  tasks: []
+...
