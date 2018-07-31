@@ -1,0 +1,70 @@
+# .travis.yml Execution script for role tests on Travis-CI
+---
+sudo: required
+
+env:
+  global:
+    - ANSIBLE_VERSION=2.6
+  matrix:
+    - DISTRIBUTION: centos
+      VERSION: 7
+    - DISTRIBUTION: ubuntu
+      VERSION: 16.04
+
+services:
+  - docker
+
+before_install:
+  # Install latest Git
+  - sudo apt-get update
+  - sudo apt-get install --only-upgrade git
+  # Allow fetching other branches than master
+  - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
+  # Fetch the branch with test code
+  - git fetch origin docker-tests
+  - cd products/sds
+  - git worktree add docker-tests origin/docker-tests
+  # Lint
+  - sudo pip install --upgrade pip
+  - sudo pip install ansible-lint yamllint
+  # ansible
+  - sudo pip install ansible==$ANSIBLE_VERSION
+
+script:
+  - cd products/sds
+  # Lint
+  - ansible-lint . -x ANSIBLE0016
+  - yamllint .
+
+  # Standalone
+  - ./docker-tests/docker-tests.sh
+  - export STANDALONE_ID=$(docker ps -qa | head -n 1)
+  - sed -i -e "s@node1 .*@node1 ansible_host=$STANDALONE_ID ansible_user=root ansible_connection=docker@" \
+    inventories/standalone/01_inventory.ini
+
+  # N-NODES
+  - ./docker-tests/docker-tests.sh
+  - export TRINODE_ID1=$(docker ps -qa | head -n 1)
+  - ./docker-tests/docker-tests.sh
+  - export TRINODE_ID2=$(docker ps -qa | head -n 1)
+  - ./docker-tests/docker-tests.sh
+  - export TRINODE_ID3=$(docker ps -qa | head -n 1)
+  - for i in $(seq 1 3); do
+      count="TRINODE_ID$i"
+      sed -i -e "s@node$i .*@node$i ansible_host=${!count} ansible_user=root ansible_connection=docker@" \
+      inventories/n-nodes/01_inventory.ini
+    done
+  # set options for low memory
+  - sed -i -e '/Low memory nodes/,/End Low memory nodes/{ s/#\([a-z].*\)/\1/g; }' \
+    inventories/n-nodes/group_vars/openio.yml
+  # add second IP on eth0
+  - docker exec -ti $TRINODE_ID3 ip addr add 172.17.0.33/16 dev eth0
+  - sed -e '/.../i \
+    openio_bind_adress: 172.17.0.33' inventories/n-nodes/host_vars/node3.yml
+
+  # Deploy standalone
+  - ansible-playbook -i inventories/standalone main.yml
+
+  # Runfunctional tests on the container
+  - for i in 2 3 4 33; do SUT_IP=172.17.0.$i ./docker-tests/functional-tests.sh; done
+...
