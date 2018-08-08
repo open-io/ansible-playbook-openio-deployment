@@ -1,0 +1,7 @@
+---
+# for proxies by example
+openio_environment: {}
+
+# mirror
+openio_mirror: "mirror.openio.io"
+...

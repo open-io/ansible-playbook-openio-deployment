@@ -1,0 +1,13 @@
+---
+oiofs_mountpoints:
+    # this path to be define in 'oiofs_mounts'
+  - path: /mnt/oiofs-MY_CONTAINER-MY_ACCOUNT
+    cache_directory: /mnt/oiofs-MY_CONTAINER-MY_ACCOUNT.cache
+    container: "{{ oiofs_mounts | selectattr('path', 'equalto', '/mnt/oiofs-MY_CONTAINER-MY_ACCOUNT') | map(attribute='container') | join }}"
+    account: "{{ oiofs_mounts | selectattr('path', 'equalto', '/mnt/oiofs-MY_CONTAINER-MY_ACCOUNT') | map(attribute='account') | join }}"
+    oioproxy_host: "{{ openio_sds_oioproxy_address }}"
+    ecd_host: "{{ openio_sds_ecd_address }}"
+    redis_sentinel_servers: '{{ openio_sds_sentinels_addresses | string | safe }}'
+    redis_sentinel_name: "{{ openio_sds_sentinels_name }}"
+    state: present
+...
