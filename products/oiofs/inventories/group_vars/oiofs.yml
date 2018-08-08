@@ -1,0 +1,35 @@
+---
+# Login provided by OPENIO
+openio_oiofs_customer_login: foo
+# Password provided by OPENIO
+openio_oiofs_customer_password: bar
+
+
+# Namespace on the SDS cluster
+openio_sds_namespace: OPENIO
+# Package repository to use
+openio_sds_release: "18.04"
+
+# Conscience SDS
+openio_sds_conscience_address: 172.17.0.4
+# Proxy SDS (deployed on oiofs nodes)
+openio_sds_oioproxy_address: "{{ ansible_default_ipv4.address }}"
+# Erasure Coding Daemon (deployed on oiofs nodes)
+openio_sds_ecd_address: "{{ ansible_default_ipv4.address }}"
+# Redis Cluster SDS
+openio_sds_sentinels_name: "{{ openio_sds_namespace }}-master-1"
+openio_sds_sentinels_addresses:
+  - 172.17.0.2:6012
+  - 172.17.0.3:6012
+  - 172.17.0.4:6012
+
+# List of oiofs mounts
+oiofs_mounts:
+  - path: /mnt/oiofs-MY_CONTAINER-MY_ACCOUNT
+    account: MY_ACCOUNT
+    container: MY_CONTAINER
+    retry_delay: 1000
+    sds_retry_delay: 1000
+    fuse_max_retries: 200
+    max_flush_thread: "{{ ansible_processor_vcpus / 2 | int }}"
+...

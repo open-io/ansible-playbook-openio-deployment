@@ -1,0 +1,21 @@
+---
+- src: https://github.com/open-io/ansible-role-openio-repository.git
+  version: 4bded6650dd6801743bb7fc2deae336515264e4c
+  name: repositories
+
+- src: http://github.com/open-io/ansible-role-openio-gridinit.git
+  version: e168647c8e2ec02269e3138be880eb00952226ba
+  name: gridinit
+
+- src: https://github.com/open-io/ansible-role-openio-oioproxy.git
+  version: fccb70a25031f3e1bdd3bfb63881662617d2054e
+  name: oioproxy
+
+- src: http://github.com/open-io/ansible-role-openio-ecd.git
+  version: a2441fd59614529881c6e55cf504b5d50b538e55
+  name: ecd
+
+- src: http://github.com/open-io/ansible-role-openio-oiofs
+  version: 53dfd0727e5e100541114993da617152adb6c844
+  name: oiofs
+...

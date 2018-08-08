@@ -1,0 +1,74 @@
+---
+- name: Setup oiofs environment
+  hosts: oiofs
+  any_errors_fatal: true
+  become: true
+  gather_facts: true
+  environment: "{{ openio_environment }}"
+
+  pre_tasks:
+    - name: Check namespace file presence
+      stat:
+        path: "/etc/oio/sds.conf.d/{{ openio_sds_namespace }}"
+      register: "_openio_namespacefile_exist"
+
+    - name: Configure namespace
+      block:
+        - name: Ensures namespace directory exists
+          file:
+            dest: "/etc/oio/sds.conf.d"
+            state: directory
+
+        - name: Create namespace file
+          copy:
+            content: |
+              [{{ openio_sds_namespace }}]
+              conscience={{ openio_sds_conscience_address }}:6000
+              proxy={{ openio_sds_oioproxy_address }}:6006
+              ecd={{ openio_sds_ecd_address }}:6017
+            dest: "/etc/oio/sds.conf.d/{{ openio_sds_namespace }}"
+
+      when: not _openio_namespacefile_exist.stat.exists
+
+  roles:
+    - role: repositories
+      openio_repository_products:
+        sds:
+          release: "{{ openio_sds_release }}"
+        oiofs:
+          user: "{{ openio_oiofs_customer_login }}"
+          password: "{{ openio_oiofs_customer_password }}"
+          release: "{{ openio_sds_release }}"
+
+    - role: gridinit
+    - role: ecd
+      openio_ecd_bind_address: "{{ openio_sds_ecd_address }}"
+      openio_ecd_gridinit_dir: /etc/gridinit.d/
+      openio_ecd_gridinit_file_prefix: "{{ openio_sds_namespace }}-"
+
+    - role: oioproxy
+      openio_oioproxy_bind_address: "{{ openio_sds_oioproxy_address }}"
+      openio_oioproxy_gridinit_dir: /etc/gridinit.d/
+      openio_oioproxy_gridinit_file_prefix: "{{ openio_sds_namespace }}-"
+      openio_oioproxy_serviceid: "1"
+
+- name: Mount oiofs
+  hosts: oiofs
+  any_errors_fatal: true
+  become: true
+  gather_facts: true
+  environment: "{{ openio_environment }}"
+       
+  pre_tasks:
+    - name: Create container in OpenIO SDS
+      command: "openio container create {{ item.container }} \
+                  --oio-account {{ item.account }} \
+                  --oio-ns {{ openio_sds_namespace }}
+                  -c Created -f value"
+      with_items: "{{ oiofs_mounts }}"
+      register: _openio_container_create
+      changed_when: _openio_container_create.stdout == "True"
+
+  roles:
+    - role: oiofs
+...
