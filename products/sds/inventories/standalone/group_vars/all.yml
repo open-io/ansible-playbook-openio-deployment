@@ -21,8 +21,9 @@ openio_user_openio_uid: 120
 # NTP
 ntp_enabled: true
 ntp_manage_config: true
-ntp_timezone: "Europe/Paris"
-ntp_area: ".fr"
+ntp_manage_timezone: false
+ntp_timezone: "Etc/UTC"
+ntp_area: ''
 ntp_servers:
   - "0{{ ntp_area }}.pool.ntp.org iburst"
   - "1{{ ntp_area }}.pool.ntp.org iburst"
