@@ -35,7 +35,7 @@
   version: f48fa03a9a32aac08895afa7cba1a6d10883a6c9
   name: zookeeper
 
-- src: https://github.com/geerlingguy/ansible-role-ntp
-  version: ff09dda458223e2d82ed5a6bfae30dace8b19b3b
+- src: https://github.com/open-io/ansible-role-openio-ntp.git
+  version: 35cb949af93b0eb2e644dad464be817e72b792e6
   name: ntp
 ...
