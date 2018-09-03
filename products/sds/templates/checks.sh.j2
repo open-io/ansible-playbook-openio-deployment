@@ -36,6 +36,10 @@ openio object save MY_CONTAINER passwd --oio-account MY_ACCOUNT --file /tmp/pass
 head /tmp/passwd
 echo --
 
+echo -e $YELLOW Show the account informations. $NC
+openio account show MY_ACCOUNT
+echo --
+
 echo -e $YELLOW Delete your object. $NC
 openio object delete MY_CONTAINER passwd --oio-account MY_ACCOUNT
 echo --
