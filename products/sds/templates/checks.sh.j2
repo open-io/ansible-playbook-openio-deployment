@@ -4,6 +4,15 @@
 YELLOW="\e[33m"
 NC="\e[39m"
 
+# Environment variables
+{% for key in openio_environment.keys() %}
+export {{ key }}={{ openio_environment[key] }}
+{% endfor %}
+{% if openio_environment.http_proxy is defined or openio_environment.https_proxy is defined %}
+export NO_PROXY={{ hostvars[inventory_hostname]['openio_bind_address'] }}
+{% endif %}
+# End environment variables
+
 echo '## OPENIO'
 . /etc/profile.d/openio.sh
 
