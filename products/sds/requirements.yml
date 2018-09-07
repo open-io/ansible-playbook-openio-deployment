@@ -8,7 +8,7 @@
   name: gridinit
 
 - src: https://github.com/open-io/ansible-role-openio-sds
-  version: 50ddd47d7210c6d1ab06cf106034fa6478fbb207
+  version: 06833959558482801eb6627c365f3d22a1a1fdfd
   name: openio-sds
 
 - src: https://github.com/open-io/ansible-role-openio-netdata
@@ -24,7 +24,7 @@
   name: oioswift
 
 - src: https://github.com/open-io/ansible-role-openio-ecd.git
-  version: a2441fd59614529881c6e55cf504b5d50b538e55
+  version: 057097610796eb675fdf1fc841e1d6acf557f974
   name: ecd
 
 - src: https://github.com/open-io/ansible-role-openio-account.git

@@ -30,6 +30,7 @@
       openio_sds_default_account: "{{ default_account }}"
       openio_chunk_size: "{{ (namespace_chunk_size_megabytes | int) * 1024 * 1024 }}"
       openio_zk_inventory_group_name: zookeeper
+      openio_ecd_url: "{{ openio_bind_address }}:6017"
 
     - role: ecd
       openio_ecd_bind_address: "{{ openio_bind_address }}"
