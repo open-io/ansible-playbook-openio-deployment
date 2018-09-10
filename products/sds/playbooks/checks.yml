@@ -4,7 +4,6 @@
   any_errors_fatal: true
   max_fail_percentage: 0
   gather_facts: true
-  become: true
   environment: "{{ openio_environment }}"
 
   tasks:
@@ -15,10 +14,19 @@
           - ansible_version.full is version_compare('2.7.0', '<')
       ignore_errors: "{{ openio_ignore_assert_errors }}"
 
+    - name: 'Check netaddr availability'
+      shell: 'echo exit | netaddr'
+      ignore_errors: false
+      failed_when: false
+      register: netaddr_ret
+
     - name: install python-netaddr
+      become: true
       package:
         name: python-netaddr
-      when: openio_manage_os_requirement
+      when:
+        - openio_manage_os_requirement
+        - netaddr_ret.rc == 127
 
 - name: Check hosts
   hosts: openio
