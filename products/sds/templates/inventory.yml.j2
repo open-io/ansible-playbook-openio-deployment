@@ -1,0 +1,126 @@
+{%- for ns in namespaces -%}
+{{ ns }}:
+  {% for svc in services -%}
+  {{ svc }}:
+{# META1 #}
+    {%- if svc == 'meta2' and 'openio_directory_m2' in group_names -%}
+      {% for mnt in openio_metadata_mounts %}
+          {%-    set partition_index = loop.index0 -%}
+          {%-    set process_per_partition = mnt.meta2_count | default(1) -%}
+          {%-   for service_id_per_partition in range(process_per_partition) -%}
+          {%-   set service_id_total = service_id_per_partition + process_per_partition * partition_index + 1 %}
+    - ip: {{ openio_bind_address }}
+      port: {{ 6120 + service_id_total }}
+      volume: {{ mnt.mountpoint }}
+      {% endfor -%}
+      {% endfor -%}
+    {% endif %}
+{# META1 #}
+    {%- if (svc == 'meta1' and 'openio_directory_m1' in group_names) -%}
+      {%- for mnt in openio_metadata_mounts %}
+    - ip: {{ openio_bind_address }}
+      port: {{ 6110 + loop.index }}
+      volume: {{ mnt.mountpoint }}
+      {% endfor -%}
+    {% endif %}
+{# META0 #}
+    {%- if (svc == 'meta0' and 'openio_directory_m0' in group_names) -%}
+      {%- for mnt in openio_metadata_mounts %}
+    - ip: {{ openio_bind_address }}
+      port: {{ 6100 + loop.index }}
+      volume: {{ mnt.mountpoint }}
+      {% endfor -%}
+    {% endif %}
+{# RAWX #}
+    {%- if svc == 'rawx' -%}
+      {%- for mnt in openio_data_mounts %}
+    - ip: {{ openio_bind_address }}
+      port: {{ 6200 + loop.index }}
+      volume: {{ mnt.mountpoint }}
+      {% endfor %}
+    {% endif %}
+{# OIOBLOBINDEXER #}
+    {%- if svc == 'oioblobindexer' -%}
+      {%- for mnt in openio_data_mounts %}
+    - ip: {{ openio_bind_address }}
+      port: null
+      volume: {{ mnt.mountpoint }}
+      {% endfor %}
+    {% endif %}
+{# RDIR #}
+    {%- if svc == 'rdir' -%}
+      {%- for mnt in openio_data_mounts %}
+    - ip: {{ openio_bind_address }}
+      port: {{ 6300 + loop.index }}
+      volume: {{ mnt.mountpoint }}
+      {% endfor %}
+    {% endif %}
+{# ACCOUNT #}
+    {%- if svc == 'account' and 'backs' in group_names %}
+    - ip: {{ openio_account_bind_address }}
+      port: {{ openio_account_bind_port }}
+      volume: null
+    {% endif %}
+{# REDIS #}
+    {%- if svc == 'redis' and 'openio_redis_cluster' in group_names %}
+    - ip: {{ openio_bind_address }}
+      port: 6011
+      volume: {{ openio_metadata_mounts[0].mountpoint }}
+    {% endif %}
+{# REDISSENTINEL #}
+    {%- if svc == 'redissentinel' and 'openio_redis_cluster' in group_names %}
+    - ip: {{ openio_bind_address }}
+      port: 6012
+      volume: null
+    {% endif %}
+{# ZOOKEEPER #}
+    {%- if svc == 'zookeeper' and 'zookeeper' in group_names %}
+    - ip: {{ openio_zookeeper_bind_address }}
+      port: {{ openio_zookeeper_bind_port }}
+      volume: {{ openio_zookeeper_volume }}
+    {% endif %}
+{# BEANSTALKD #}
+    {%- if svc == 'beanstalkd' and 'backs' in group_names %}
+    - ip: {{ openio_bind_address }}
+      port: 6014
+      volume: {{ openio_metadata_mounts[0].mountpoint }}
+    {% endif %}
+{# OIOEVENTAGENT #}
+    {%- if svc == 'oioeventagent' and 'backs' in group_names %}
+    - ip: {{ openio_bind_address }}
+      port: null
+      volume: null
+    {% endif %}
+{# CONSCIENCEAGENT #}
+    {%- if svc == 'conscienceagent' and 'backs' in group_names %}
+    - ip: {{ openio_bind_address }}
+      port: null
+      volume: null
+    {% endif %}
+{# CONSCIENCE #}
+    {%- if svc == 'conscience' and 'openio_conscience' in group_names %}
+    - ip: {{ openio_bind_address }}
+      port: 6000
+      volume: null
+    {% endif %}
+{# OIOSWIFT #}
+    {%- if svc == 'oioswift' and 'fronts' in group_names %}
+    - ip: {{ openio_oioswift_bind_address }}
+      port: {{ openio_oioswift_bind_port }}
+      volume: null
+    {% endif %}
+{# MEMCACHED #}
+    {%- if svc == 'memcached' and 'fronts' in group_names %}
+    - ip: {{ openio_memcached_bind_address }}
+      port: {{ openio_memcached_bind_port }}
+      volume: null
+    {% endif %}
+{# ECD #}
+    {%- if svc == 'ecd' and 'backs' in group_names and openio_ecd %}
+    - ip: {{ openio_ecd_bind_address }}
+      port: {{ openio_ecd_bind_port }}
+      volume: {{ openio_ecd_volume }}
+    {% endif %}
+
+  {% endfor %}
+{%- endfor -%}

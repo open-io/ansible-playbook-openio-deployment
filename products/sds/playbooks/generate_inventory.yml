@@ -1,0 +1,49 @@
+---
+- name: Generate inventory
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - role: openio-sds
+      when: false
+    - role: account
+      when: false
+    - role: zookeeper
+      when: false
+    - role: oioswift
+      when: false
+    - role: ecd
+      when: false
+    - role: memcached
+      when: false
+  tasks:
+    - name: set namespaces
+      set_fact:
+        namespaces: ["{{openio_namespace}}",]
+        services:
+          - meta0
+          - meta1
+          - meta2
+          - rawx
+          - oioblobindexer
+          - rdir
+          - account
+          - redis
+          - redissentinel
+          - zookeeper
+          - beanstalkd
+          - oioeventagent
+          - conscienceagent
+          - conscience
+          - oioswift
+          - ecd
+          - memcached
+
+    - name: Generate inventory
+      template:
+        src: "{{ playbook_dir ~ '/../templates/inventory.yml.j2' }}"
+        dest: /etc/oio/sds/inventory.yml
+        owner: openio
+        group: openio
+        mode: 640
+...
