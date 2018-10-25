@@ -1,0 +1,17 @@
+---
+- name: Generate memcached inventory
+  set_fact:
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'services': new_item } } }, recursive=true) }}"
+  vars:
+    new_item:
+      memcached:
+        - id: "{{ namespace }}-memcached-{{ openio_memcached_serviceid }}"
+          ip: "{{ openio_memcached_bind_address }}"
+          port: "{{ openio_memcached_bind_port }}"
+          partition: ""
+          volume: ""
+          location: ""
+          config: {}
+  when:
+    - "'keystone' in group_names"
+...

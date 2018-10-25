@@ -1,0 +1,17 @@
+---
+- name: Generate oioeventagent inventory
+  set_fact:
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'services': new_item } } }, recursive=true) }}"
+  vars:
+    new_item:
+      oioeventagent:
+        - id: "{{ namespace }}-oioeventagent-{{ openio_event_agent_serviceid }}"
+          ip: ""
+          port: 0
+          partition: ""
+          volume: ""
+          location: "{{ openio_event_agent_location }}"
+          config: {}
+  when:
+    - "'oio-event-agent' in group_names"
+...

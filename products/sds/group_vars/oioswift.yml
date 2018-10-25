@@ -1,0 +1,28 @@
+---
+openio_memcached_bind_address: "{{ openio_bind_address }}"
+
+openio_oioswift_sds_pool_connections: 500
+openio_oioswift_sds_pool_maxsize: 500
+openio_oioswift_bind_address: "{{ openio_bind_address }}"
+openio_oioswift_inventory_groupname: oioswift
+openio_oioswift_sds_proxy_namespace: "{{ namespace }}"
+openio_oioswift_pipeline: "{{ pipeline_tempauth }}"
+
+openio_oioswift_filter_cache:
+  use: "egg:swift#memcache"
+  memcache_servers:
+    "{{ groups['oioswift'] \
+    | map('extract', hostvars, ['openio_bind_address'])\
+    | join(':6019,') }}:6019"
+  memcache_max_connections: 500
+
+openio_oioswift_filter_swift3:
+  use: "egg:swift3#swift3"
+  force_swift_request_proxy_log: true
+  s3_acl: true
+  location: "{{ openio_s3_region }}"
+  check_bucket_owner: true
+
+openio_oioswift_filter_tempauth:
+  "{{ {'use': 'egg:oioswift#tempauth'} | combine(openio_oioswift_users | dict_to_tempauth) }}"
+...

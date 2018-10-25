@@ -1,0 +1,14 @@
+---
+openio_meta_bind_address: "{{ openio_bind_address }}"
+
+openio_meta0_global_bind_port: 6001
+openio_meta0_options: []
+
+openio_meta1_global_bind_port: 6110
+openio_meta1_options: []
+
+openio_meta2_global_bind_port: 6120
+openio_meta2_options: []
+
+openio_meta_location: "{{ openio_location_room | default ('') }}{{ openio_location_rack | default ('') }}{{ openio_location_server | default ('') }}{{ openio_meta_serviceid }}"
+...

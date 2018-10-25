@@ -1,0 +1,15 @@
+---
+- name: "Install needed packages"
+  yum:
+    name: "{{ pkg }}"
+  with_items:
+    - rsyslog
+    - nmap-ncat
+    - python-kazoo
+    - openio-sds-tools
+    - openio-sds-rsyslog
+    - openio-sds-logrotate
+  loop_control:
+    loop_var: pkg
+  ignore_errors: "{{ ansible_check_mode }}"
+...

@@ -1,0 +1,15 @@
+---
+openio_rawx_bind_address: "{{ openio_bind_address }}"
+openio_rawx_global_bind_port: 6200
+
+openio_rdir_bind_address: "{{ openio_bind_address }}"
+openio_rdir_global_bind_port: 6300
+
+openio_rawx_golang: false
+
+openio_rawx_location: "{{ openio_location_room | default ('') }}{{ openio_location_rack | default ('') }}{{ openio_location_server | default ('') }}{{ openio_rawx_serviceid }}"
+
+openio_rdir_location: "{{ openio_location_room | default ('') }}{{ openio_location_rack | default ('') }}{{ openio_location_server | default ('') }}{{ openio_rdir_serviceid }}"
+
+openio_blob_indexer_location: "{{ openio_location_room | default ('') }}{{ openio_location_rack | default ('') }}{{ openio_location_server | default ('') }}{{ openio_blob_indexer_serviceid }}"
+...

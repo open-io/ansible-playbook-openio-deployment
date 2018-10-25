@@ -1,0 +1,17 @@
+---
+- name: Generate oio-blob-rebuilder inventory
+  set_fact:
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'services': new_item } } }, recursive=true) }}"
+  vars:
+    new_item:
+      oioblobrebuilder:
+        - id: "{{ namespace }}-oioblobrebuilder-{{ openio_blob_rebuilder_serviceid }}"
+          ip: ""
+          port: 0
+          partition: ""
+          volume: ""
+          location: ""
+          config: {}
+  when:
+    - "'backs' in group_names"
+...

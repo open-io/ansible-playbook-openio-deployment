@@ -1,0 +1,17 @@
+---
+- name: Generate ecd inventory
+  set_fact:
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'services': new_item } } }, recursive=true) }}"
+  vars:
+    new_item:
+      ecd:
+        - id: "{{ namespace }}-ecd-{{ openio_ecd_serviceid }}"
+          ip: "{{ openio_bind_address }}"
+          port: "{{ openio_ecd_bind_port }}"
+          partition: ""
+          volume: "{{ openio_ecd_volume }}"
+          location: ""
+          config: {}
+  when:
+    - "'ecd' in group_names"
+...

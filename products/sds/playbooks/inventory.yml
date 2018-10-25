@@ -1,0 +1,85 @@
+---
+- name: Generate inventory files
+  hosts: fronts:backs
+  become: true
+  any_errors_fatal: true
+  gather_facts: true
+
+
+  roles:
+    - role: namespace
+      when: false
+    - role: redis
+      when: false
+    - role: zookeeper
+      when: false
+    - role: beanstalkd
+      when: false
+    - role: oioproxy
+      when: false
+    - role: account
+      when: false
+    - role: oio-blob-rebuilder
+      when: false
+    - role: oio-event-agent
+      when: false
+    - role: conscienceagent
+      when: false
+    - role: meta
+      when: false
+    - role: rdir
+      when: false
+    - role: oio-blob-indexer
+      when: false
+    - role: rawx
+      when: false
+    - role: conscience
+      when: false
+    - role: memcached
+      when: false
+    - role: oioswift
+      when: false
+    - role: ecd
+      when: false
+
+  vars:
+    inventory:
+      namespaces: {}
+      created_at: "{{ ansible_date_time.iso8601_micro }}"
+
+  tasks:
+    - include: inventory/namespace.yml
+    - include: inventory/meta0.yml
+    - include: inventory/meta1.yml
+    - include: inventory/meta2.yml
+    - include: inventory/rawx.yml
+    - include: inventory/oioblobindexer.yml
+    - include: inventory/oioblobrebuilder.yml
+    - include: inventory/rdir.yml
+    - include: inventory/account.yml
+    - include: inventory/redis.yml
+    - include: inventory/redissentinel.yml
+    - include: inventory/zookeeper.yml
+    - include: inventory/beanstalkd.yml
+    - include: inventory/oioeventagent.yml
+    - include: inventory/conscienceagent.yml
+    - include: inventory/conscience.yml
+    - include: inventory/oioproxy.yml
+    - include: inventory/memcached.yml
+    - include: inventory/oioswift.yml
+    - include: inventory/ecd.yml
+
+    - name: Test directory namespace presence
+      stat:
+        path: "/etc/oio/sds/{{ namespace }}"
+      register: _namespace_dir
+
+    - name: Generate inventory
+      copy:
+        content: "---\n{{ inventory | to_nice_yaml }}\n...\n"
+        dest: /etc/oio/sds/{{ namespace }}/inventory.yml
+        owner: openio
+        group: openio
+        mode: 0640
+      when: _namespace_dir.stat.exists
+...

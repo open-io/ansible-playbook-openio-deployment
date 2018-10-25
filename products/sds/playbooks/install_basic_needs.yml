@@ -1,17 +1,32 @@
 ---
 - name: Install requirements
-  hosts: all
+  hosts: openio
   gather_facts: true
   become: true
+  any_errors_fatal: true
   environment: "{{ openio_environment }}"
 
   roles:
     - role: repositories
+      openio_repository_openstack_release: "{{ openio_openstack_distro }}"
       openio_repository_mirror_host: "{{ openio_mirror }}"
+      openio_repository_no_log: "{{ openio_no_log }}"
       openio_repository_products:
         sds:
-          release: "{{ openio_sds_release }}"
+          release: "{{ openio_sds_release | default(hostvars[groups['openio'][0]]['openio_sds_release']) }}"
+    - role: repositories
+      openio_repository_mirror_host: "{{ openio_mirror }}"
+      openio_repository_openstack_release: "{{ openio_openstack_distro }}"
+      openio_repository_no_log: "{{ openio_no_log }}"
+      openio_repository_products:
+        sds:
+          release: "unstable"
+      when: openio_unstable_repo | default(false)
+
     - role: ntp
+    - role: gridinit
+      openio_gridinit_conf_location: "/etc/gridinit.d/{*,*/*}"
+      ignore_errors: "{{ ansible_check_mode }}"
 
   tasks:
     - name: Install iproute

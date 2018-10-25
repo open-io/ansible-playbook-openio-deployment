@@ -1,0 +1,5 @@
+---
+- name: Generate namespace inventory
+  set_fact:
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'config': {}, 'services': {} } } }, recursive=true) }}"
+...

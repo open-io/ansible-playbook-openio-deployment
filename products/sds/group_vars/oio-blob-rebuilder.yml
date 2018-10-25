@@ -1,0 +1,6 @@
+---
+openio_blob_rebuilder_gridinit_on_die: respawn
+openio_blob_rebuilder_gridinit_start_at_boot: true
+
+openio_blob_rebuilder_event_agent_url: "beanstalk://{{ openio_bind_address }}:6014"
+...
