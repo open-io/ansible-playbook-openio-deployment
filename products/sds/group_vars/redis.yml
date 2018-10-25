@@ -1,0 +1,8 @@
+---
+openio_redis_bind_address: "{{ openio_bind_address }}"
+openio_redis_server_bind_port: 6011
+openio_redis_sentinel_bind_port: 6012
+openio_redis_master:
+  address: "{{ hostvars[groups['redis'][0]]['openio_bind_address'] }}"
+  port: "{{ openio_redis_server_bind_port }}"
+...

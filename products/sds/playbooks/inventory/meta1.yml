@@ -1,0 +1,39 @@
+---
+- name: Prepare meta1 inventory
+  set_fact:
+    meta1: >-
+      {% set _var = [] -%}
+      {% for mount in openio_metadata_mounts -%}
+      {%   set partition_index = loop.index0 -%}
+      {%   set process_per_partition = mount.meta1_count | default(1) -%}
+      {%   for service_id_per_partition in range(process_per_partition) -%}
+      {%     set service_id_total = service_id_per_partition + process_per_partition * partition_index -%}
+      {%     set _dict = {'partition': mount.partition, 'mountpoint': mount.mountpoint, 'id': service_id_total} -%}
+      {%     if _var.append(_dict) -%}{% endif -%}
+      {%   endfor -%}
+      {% endfor -%}
+      {{ _var }}
+  when:
+    - openio_metadata_mounts is defined
+    - "'meta1' in group_names"
+
+
+- name: Generate meta1 inventory
+  set_fact:
+    inventory: >-
+      {% set _hash = {'id': openio_meta_id, 'ip': openio_bind_address, 'port': openio_meta_bind_port | int, 'volume': openio_meta_volume, 'partition': meta.partition, 'location': openio_meta_location, 'config': openio_meta_config} -%}
+      {% set _array = inventory.namespaces[namespace].services.meta1 | default([]) | union([_hash]) -%}
+      {{ inventory | combine({ 'namespaces': { namespace: { 'services': { 'meta1': _array } } } }, recursive=true) }}
+  vars:
+    openio_meta_serviceid: "{{ meta.id }}"
+    openio_meta_id: "{{ namespace }}-meta1-{{ openio_meta_serviceid }}"
+    openio_meta_config: {}
+    openio_meta_bind_port: "{{ openio_meta1_global_bind_port + meta.id }}"
+    openio_meta_volume: "{{ meta.mountpoint }}/{{ namespace }}/meta1-{{ openio_meta_serviceid }}"
+  with_items: "{{ meta1 }}"
+  loop_control:
+    loop_var: meta
+  when:
+    - openio_metadata_mounts is defined
+    - "'meta1' in group_names"
+...

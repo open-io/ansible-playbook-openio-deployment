@@ -1,0 +1,18 @@
+---
+- name: Generate redis inventory
+  set_fact:
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'services': new_item } } }, recursive=true) }}"
+  vars:
+    new_item:
+      redis:
+        - id: "{{ namespace }}-redis-{{ openio_redis_serviceid }}"
+          ip: "{{ openio_redis_bind_address }}"
+          port: "{{ openio_redis_server_bind_port }}"
+          partition: ""
+          volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/redis-{{ openio_redis_serviceid }}"
+          location: ""
+          config: {}
+  when:
+    - openio_metadata_mounts is defined
+    - "'redis' in group_names"
+...

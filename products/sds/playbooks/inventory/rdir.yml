@@ -1,0 +1,21 @@
+---
+- name: Generate rdir inventory
+  set_fact:
+    inventory: >-
+      {% set _hash = {'id': openio_rdir_id, 'ip': openio_bind_address, 'port': openio_rdir_bind_port | int, 'volume': openio_rdir_volume, 'partition': mount.partition, 'location': openio_rdir_location, 'config': openio_rdir_config} -%}
+      {% set _array = inventory.namespaces[namespace].services.rdir | default([]) | union([_hash]) -%}
+      {{ inventory | combine({ 'namespaces': { namespace: { 'services': { 'rdir': _array } } } }, recursive=true) }}
+  vars:
+    openio_rdir_serviceid: "{{ idx }}"
+    openio_rdir_id: "{{ namespace }}-rdir-{{ openio_rdir_serviceid }}"
+    openio_rdir_config: {}
+    openio_rdir_bind_port: "{{ openio_rdir_global_bind_port + idx }}"
+    openio_rdir_volume: "{{ mount.mountpoint }}/{{ namespace }}/rdir-{{ openio_rdir_serviceid }}"
+  with_items: "{{ openio_data_mounts }}"
+  loop_control:
+    loop_var: mount
+    index_var: idx
+  when:
+    - openio_metadata_mounts is defined
+    - "'rawx' in group_names"
+...

@@ -1,41 +1,85 @@
 ---
 - src: https://github.com/open-io/ansible-role-openio-repository.git
-  version: 4bded6650dd6801743bb7fc2deae336515264e4c
+  version: 9c40fc6bbaeb802068301f3b1e70fa32f4c6e252
   name: repositories
 
 - src: https://github.com/open-io/ansible-role-gridinit
-  version: e168647c8e2ec02269e3138be880eb00952226ba
+  version: 3115f2b33f78185460007417b08800669858e64f
   name: gridinit
 
-- src: https://github.com/open-io/ansible-role-openio-sds
-  version: 06833959558482801eb6627c365f3d22a1a1fdfd
-  name: openio-sds
+- src: https://github.com/open-io/ansible-role-openio-meta.git
+  version: 09eb8d9f5204b4a1b94d1679a17ff62d8b537a1c
+  name: meta
 
-- src: https://github.com/open-io/ansible-role-openio-netdata
-  version: cc1fe69b3b71a440e8a1c0800493d3dfe7bb3138
-  name: netdata
+- src: https://github.com/open-io/ansible-role-openio-redis.git
+  version: b16cf4abd8e89be713bfe49e85abd298c85299d3
+  name: redis
+
+- src: https://github.com/open-io/ansible-role-openio-beanstalkd.git
+  version: f7476779f3640e6a42c40168cd754e83dd12d6e0
+  name: beanstalkd
 
 - src: https://github.com/open-io/ansible-role-openio-memcached
-  version: 6e6df72a43a866dc71ba3492bfc8431afa57c419
+  version: fd2c9319ff51da41780d2da29ad1b3d287ee34fc
   name: memcached
 
 - src: https://github.com/open-io/ansible-role-openio-oioswift.git
-  version: b7bc199a7c724712b69d3eaa25a37c658ff191a2
+  version: 7a6e240d69ab289a6427d3d9491e5c06ca0578fa
   name: oioswift
 
 - src: https://github.com/open-io/ansible-role-openio-ecd.git
-  version: 057097610796eb675fdf1fc841e1d6acf557f974
+  version: 221144ad18113290bf51cf68b7b209af9e082dec
   name: ecd
 
+- src: https://github.com/open-io/ansible-role-openio-conscience.git
+  version: 278d884ca6fb1628e5cd0e893405621644363d83
+  name: conscience
+
+- src: https://github.com/open-io/ansible-role-openio-conscienceagent.git
+  version: 9e2c849af8110fae16e1eca511792a57afae2a86
+  name: conscienceagent
+
 - src: https://github.com/open-io/ansible-role-openio-account.git
-  version: bb35d53a7ae4044207242aff37ed61327ab4d69e
+  version: 13c43a53caf189609dc89a59d2441e0e507c5e49
   name: account
 
 - src: https://github.com/open-io/ansible-role-openio-zookeeper
-  version: f48fa03a9a32aac08895afa7cba1a6d10883a6c9
+  version: 3d71fea0290a46479f27a0011e802745a51baa43
   name: zookeeper
 
-- src: https://github.com/open-io/ansible-role-openio-ntp.git
-  version: 35cb949af93b0eb2e644dad464be817e72b792e6
+- src: https://github.com/open-io/ansible-role-openio-oioproxy
+  version: b3024bc977024895c72f412c473496b110fb917f
+  name: oioproxy
+
+- src: https://github.com/open-io/ansible-role-openio-ntp
+  version: 0e88b8a9c7a11d49cfd3ad5a4197894d77bdf34a
   name: ntp
+
+- src: https://github.com/open-io/ansible-role-openio-oio-blob-rebuilder.git
+  version: 04efc55cceaf6555e751887b5669c549efc52d66
+  name: oio-blob-rebuilder
+
+- src: https://github.com/open-io/ansible-role-openio-oio-blob-indexer.git
+  version: 05b2b6c3c04f7839c492a2a94f10cf2475203ddf
+  name: oio-blob-indexer
+
+- src: https://github.com/open-io/ansible-role-openio-oio-event-agent.git
+  version: ce4ff8770447ed95c6cc9518d28588407b395517
+  name: oio-event-agent
+
+- src: https://github.com/open-io/ansible-role-openio-rawx.git
+  version: 9437cf5ba518d4ac7fbece3f754005a99cf303c2
+  name: rawx
+
+- src: https://github.com/open-io/ansible-role-openio-rdir.git
+  version: 2c2e55b8cf261b9d5ff7a5d9d665aacd54a4523f
+  name: rdir
+
+- src: https://github.com/open-io/ansible-role-openio-conscienceagent.git
+  version: 9e2c849af8110fae16e1eca511792a57afae2a86
+  name: conscienceagent
+
+- src: https://github.com/open-io/ansible-role-openio-namespace.git
+  version: ad949dd2ed75f2ef8d5a49b635d9c346ebcf4da2
+  name: namespace
 ...

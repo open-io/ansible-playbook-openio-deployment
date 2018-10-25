@@ -1,42 +1,583 @@
 ---
-- name: Install and configure OpenIO SDS
+- name: Install requirements to installation on nodes
   any_errors_fatal: true
   hosts: openio
   become: true
   gather_facts: true
   environment: "{{ openio_environment }}"
+  tasks:
+    - name: "Include {{ ansible_distribution }} tasks"
+      include_tasks: "{{ item }}"
+      with_first_found:
+        - "openiosds-{{ ansible_distribution }}.yml"
+        - "openiosds-{{ ansible_os_family }}.yml"
 
-  pre_tasks:
+    - name: "Set sysctl parameters"
+      sysctl:
+        sysctl_file: "/etc/sysctl.d/openio-sds.conf"
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        sysctl_set: true
+        reload: true
+      with_dict: "{{ openio_sysctl_entries }}"
+      when:
+        - openio_sysctl_managed
+        - ansible_virtualization_type != 'docker'
+      failed_when: false
+
+    - name: "Ensure {{ namespace }} directory mount exists"
+      file:
+        path: "{{ item.mountpoint }}/{{ namespace }}"
+        state: directory
+        owner: openio
+        group: openio
+        mode: 0750
+        recurse: true
+      with_items:
+        - "{{ openio_data_mounts | default( [] ) }}"
+        - "{{ openio_metadata_mounts | default( [] ) }}"
+
     - name: set openio_bind_address as fact
       set_fact:
         openio_bind_address: "{{ openio_bind_address }}"
 
-  roles:
-    - role: openio-sds
-      openio_sds_version: "{{ openio_sds_release }}"
-      openio_namespace: "{{ namespace }}"
-      openio_storage_policy: "{{ namespace_storage_policy }}"
-      openio_sds_sysctl_managed: "{{ openio_manage_sysctl }}"
-      openio_meta1_digits: "{{ namespace_meta1_digits }}"
-      openio_zk_cluster_ip: "{{ [] if groups.all | length == 1 else groups['zookeeper'] \
-        | map('extract',hostvars,['openio_bind_address']) | list }}"
-      openio_redis_cluster_ip: "{{ groups['openio_redis_cluster'] \
-        | map('extract',hostvars,['openio_bind_address']) | list }}"
-      conscience_ip: "{{ groups['openio_conscience'] \
-        | map('extract',hostvars,['openio_bind_address']) | list | first }}"
-      openio_bootstrap: "{{ openio_ecd }}"
-      openio_network_private_ipaddress: "{{ openio_bind_address }}"
-      openio_network_public_ipaddress: "{{ openio_bind_address }}"
-      openio_sds_default_account: "{{ default_account }}"
-      openio_chunk_size: "{{ (namespace_chunk_size_megabytes | int) * 1024 * 1024 }}"
-      openio_zk_inventory_group_name: zookeeper
-      openio_ecd_url: "{{ openio_bind_address }}:6017"
+###
 
-    - role: ecd
-      openio_ecd_bind_address: "{{ openio_bind_address }}"
-      openio_ecd_gridinit_file_prefix: "{{ namespace }}-"
-      openio_ecd_gridinit_dir: "/etc/gridinit.d/"
+- name: Install and configure OpenIO Namespace
+  any_errors_fatal: true
+  hosts: namespace
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags: namespace
+
+  roles:
+    - role: namespace
+      openio_namespace_name: "{{ namespace }}"
+###
+
+- name: Install and configure OpenIO zookeeper
+  any_errors_fatal: true
+  hosts: zookeeper
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags: zookeeper
+
+  roles:
+    - role: zookeeper
+      openio_zookeeper_namespace: "{{ namespace }}"
+      openio_zookeeper_gridinit_dir: "/etc/gridinit.d/"
+      openio_zookeeper_gridinit_file_prefix: "{{ namespace }}-"
+      openio_zookeeper_provision_only: "{{ openio_maintenance_mode }}"
+      openio_zookeeper_volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/zookeeper-{{ openio_zookeeper_serviceid }}"
       when:
-        - groups.all | length >= 3
-        - openio_ecd
+        - openio_metadata_mounts is defined
+        - openio_metadata_mounts[0]
+
+  tasks:
+    - block:
+        - name: Check ZooKeeper status
+          znode:
+            hosts: "{{ openio_bind_address }}:6005"
+            name: "/hc/ns/{{ namespace }}"
+            op: get
+          register: openio_zk_status
+          failed_when: false
+          run_once: true
+
+        - name: Wait for Zookeeper to be online
+          shell: "echo ruok | nc {{ item }} 6005"
+          register: result
+          until: result.stdout.find("imok") != -1
+          retries: 10
+          delay: 3
+          with_items: "{{ groups['zookeeper'] \
+            | map('extract', hostvars, ['openio_bind_address'])\
+            | list }}"
+          run_once: true
+
+        - name: "Bootstrapping ZooKeeper for namespace {{ namespace }}"
+          command: "/usr/bin/zk-bootstrap.py {{ namespace }}"
+          when: 'openio_zk_status.msg == "The requested node does not exist."'
+          register: zk_bootstrap
+          until: zk_bootstrap.rc == 0
+          retries: 3
+          delay: 5
+          ignore_errors: true
+          run_once: true
+
+        - name: "Bootstrapping ZooKeeper for namespace {{ namespace }} in slow mode"
+          command: "/usr/bin/zk-bootstrap.py {{ namespace }}"
+          when:
+            - 'openio_zk_status.msg == "The requested node does not exist."'
+            - zk_bootstrap.failed
+          register: zk_bootstrap_slow
+          until: zk_bootstrap_slow.rc == 0
+          retries: 3
+          delay: 5
+          run_once: true
+
+      when:
+        - openio_metadata_mounts is defined
+        - openio_metadata_mounts[0]
+        - not ansible_check_mode
+###
+
+- name: Install and configure OpenIO redis
+  any_errors_fatal: true
+  hosts: redis
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags: redis
+
+  roles:
+    - role: redis
+      openio_redis_namespace: "{{ namespace }}"
+      openio_redis_gridinit_dir: "/etc/gridinit.d/"
+      openio_redis_gridinit_file_prefix: "{{ namespace }}-"
+      openio_redis_provision_only: "{{ openio_maintenance_mode }}"
+      openio_redis_type: "redis"
+      openio_redis_bind_port: "{{ openio_redis_server_bind_port }}"
+      openio_redis_volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/{{ openio_redis_type }}-{{ openio_redis_serviceid }}"
+      when:
+        - openio_metadata_mounts is defined
+        - openio_metadata_mounts[0]
+
+    - role: redis
+      openio_redis_namespace: "{{ namespace }}"
+      openio_redis_gridinit_dir: "/etc/gridinit.d/"
+      openio_redis_gridinit_file_prefix: "{{ namespace }}-"
+      openio_redis_provision_only: "{{ openio_maintenance_mode }}"
+      openio_redis_type: "redissentinel"
+      openio_redis_bind_port: "{{ openio_redis_sentinel_bind_port }}"
+      openio_redis_volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/{{ openio_redis_type }}-{{ openio_redis_serviceid }}"
+      when:
+        - openio_metadata_mounts is defined
+        - openio_metadata_mounts[0]
+
+
+  tasks: []   # TODO healthcheck
+###
+
+- name: Install and configure OpenIO beanstalkd
+  any_errors_fatal: true
+  hosts: backs
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags: beanstalkd
+
+  roles:
+    - role: beanstalkd
+      openio_beanstalkd_namespace: "{{ namespace }}"
+      openio_beanstalkd_bind_address: "{{ openio_bind_address }}"
+      openio_beanstalkd_gridinit_dir: "/etc/gridinit.d/"
+      openio_beanstalkd_gridinit_file_prefix: "{{ namespace }}-"
+      openio_beanstalkd_provision_only: "{{ openio_maintenance_mode }}"
+      openio_beanstalkd_volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/beanstalkd-{{ openio_beanstalkd_serviceid }}"
+      when:
+        - openio_metadata_mounts is defined
+        - openio_metadata_mounts[0]
+
+  tasks: []   # TODO healthcheck
+###
+
+- name: Install and configure OpenIO Conscience
+  any_errors_fatal: true
+  hosts: conscience
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags: conscience
+
+  roles:
+    - role: conscience
+      openio_conscience_serviceid: "0"
+      openio_conscience_namespace: "{{ namespace }}"
+      openio_conscience_gridinit_file_prefix: "{{ namespace }}-"
+      openio_conscience_gridinit_dir: "/etc/gridinit.d/"
+      openio_conscience_provision_only: "{{ openio_maintenance_mode }}"
+
+  tasks: []   # TODO healthcheck
+###
+
+- name: Install and configure OpenIO Proxy
+  any_errors_fatal: true
+  hosts: oioproxy
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags: oioproxy
+
+  roles:
+    - role: oioproxy
+      openio_oioproxy_namespace: "{{ namespace }}"
+      openio_oioproxy_gridinit_file_prefix: "{{ namespace }}-"
+      openio_oioproxy_gridinit_dir: "/etc/gridinit.d/"
+      openio_oioproxy_provision_only: "{{ openio_maintenance_mode }}"
+
+  tasks: []   # TODO healthcheck
+###
+
+- name: Install and configure OpenIO Account
+  any_errors_fatal: true
+  hosts: account
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags: account
+
+  roles:
+    - role: account
+      openio_account_namespace: "{{ namespace }}"
+      openio_account_gridinit_dir: "/etc/gridinit.d/"
+      openio_account_gridinit_file_prefix: "{{ namespace }}-"
+      openio_account_provision_only: "{{ openio_maintenance_mode }}"
+
+  tasks: []   # TODO healthcheck
+###
+
+- name: Install and configure OpenIO meta0
+  any_errors_fatal: true
+  hosts: meta0
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags:
+    - meta0
+    - meta
+
+  tasks:
+    - name: Install meta0
+      include_role:
+        name: meta
+      vars:
+        openio_meta_namespace: "{{ namespace }}"
+        openio_meta_type: meta0
+        openio_meta_serviceid: "0"
+        openio_meta_bind_port: "{{ openio_meta0_global_bind_port + openio_meta_serviceid | int }}"
+        openio_meta_gridinit_file_prefix: "{{ namespace }}-"
+        openio_meta_gridinit_dir: "/etc/gridinit.d/"
+        openio_meta_volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/meta0-{{ openio_meta_serviceid }}"
+        openio_meta_options: "{{ openio_meta0_options }}"
+        openio_meta_provision_only: "{{ openio_maintenance_mode }}"
+      when:
+        - openio_metadata_mounts is defined
+        - openio_metadata_mounts[0]
+
+# TODO healthcheck
+
+###
+
+- name: Install and configure OpenIO meta1
+  any_errors_fatal: true
+  hosts: meta1
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags:
+    - meta1
+    - meta
+
+  tasks:
+    - block:
+        - name: Generate list of meta1
+          set_fact:
+            meta1: >-
+              {% set _var = [] -%}
+              {% for mount in openio_metadata_mounts -%}
+              {%   set partition_index = loop.index0 -%}
+              {%   set process_per_partition = mount.meta1_count | default(1) -%}
+              {%   for service_id_per_partition in range(process_per_partition) -%}
+              {%     set service_id_total = service_id_per_partition + process_per_partition * partition_index -%}
+              {%     set _dict = {'partition': mount.partition, 'mountpoint': mount.mountpoint, 'id': service_id_total} -%}
+              {%     if _var.append(_dict) -%}{% endif -%}
+              {%   endfor -%}
+              {% endfor -%}
+              {{ _var }}
+
+        - name: Install meta1
+          include_role:
+            name: meta
+          vars:
+            openio_meta_namespace: "{{ namespace }}"
+            openio_meta_type: meta1
+            openio_meta_serviceid: "{{ meta.id }}"
+            openio_meta_bind_port: "{{ openio_meta1_global_bind_port + meta.id | int }}"
+            openio_meta_gridinit_file_prefix: "{{ namespace }}-"
+            openio_meta_gridinit_dir: "/etc/gridinit.d/"
+            openio_meta_volume: "{{ meta.mountpoint }}/{{ namespace }}/meta1-{{ openio_meta_serviceid }}"
+            openio_meta_options: "{{ openio_meta1_options }}"
+            openio_meta_provision_only: "{{ openio_maintenance_mode }}"
+          with_items: "{{ meta1 }}"
+          loop_control:
+            loop_var: meta
+      when:
+        - openio_metadata_mounts is defined
+        - openio_metadata_mounts[0]
+
+# TODO healthcheck
+
+###
+
+- name: Install and configure OpenIO meta2
+  any_errors_fatal: true
+  hosts: meta2
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags:
+    - meta2
+    - meta
+
+  tasks:
+    - block:
+        - name: Generate list of meta2
+          set_fact:
+            meta2: >-
+              {% set _var = [] -%}
+              {% for mount in openio_metadata_mounts -%}
+              {%   set partition_index = loop.index0 -%}
+              {%   set process_per_partition = mount.meta2_count | default(1) -%}
+              {%   for service_id_per_partition in range(process_per_partition) -%}
+              {%     set service_id_total = service_id_per_partition + process_per_partition * partition_index -%}
+              {%     set _dict = {'partition': mount.partition, 'mountpoint': mount.mountpoint, 'id': service_id_total} -%}
+              {%     if _var.append(_dict) -%}{% endif -%}
+              {%   endfor -%}
+              {% endfor -%}
+              {{ _var }}
+
+        - name: Install meta2
+          include_role:
+            name: meta
+          vars:
+            openio_meta_namespace: "{{ namespace }}"
+            openio_meta_type: meta2
+            openio_meta_serviceid: "{{ meta.id }}"
+            openio_meta_bind_port: "{{ openio_meta2_global_bind_port + meta.id | int }}"
+            openio_meta_gridinit_file_prefix: "{{ namespace }}-"
+            openio_meta_gridinit_dir: "/etc/gridinit.d/"
+            openio_meta_volume: "{{ meta.mountpoint }}/{{ namespace }}/meta2-{{ openio_meta_serviceid }}"
+            openio_meta_options: "{{ openio_meta2_options }}"
+            openio_meta_provision_only: "{{ openio_maintenance_mode }}"
+          with_items: "{{ meta2 }}"
+          loop_control:
+            loop_var: meta
+      when:
+        - openio_metadata_mounts is defined
+        - openio_metadata_mounts[0]
+
+# TODO healthcheck
+
+###
+
+- name: Install and configure OpenIO rawx
+  any_errors_fatal: true
+  hosts: rawx
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags:
+    - rawx
+
+  tasks:
+    - block:
+        - name: Install rawx
+          include_role:
+            name: rawx
+          vars:
+            openio_rawx_namespace: "{{ namespace }}"
+            openio_rawx_serviceid: "{{ idx }}"
+            openio_rawx_bind_port: "{{ openio_rawx_global_bind_port + idx }}"
+            openio_rawx_gridinit_file_prefix: "{{ namespace }}-"
+            openio_rawx_grigridinit_dir: "/etc/gridinit.d/"
+            openio_rawx_volume: "{{ mount.mountpoint }}/{{ namespace }}/rawx-{{ openio_rawx_serviceid }}"
+            openio_rawx_provision_only: "{{ openio_maintenance_mode }}"
+          with_items: "{{ openio_data_mounts }}"
+          loop_control:
+            loop_var: mount
+            index_var: idx
+
+        - name: Install oio-blob-indexer
+          include_role:
+            name: oio-blob-indexer
+          vars:
+            openio_blob_indexer_namespace: "{{ namespace }}"
+            openio_blob_indexer_serviceid: "{{ idx }}"
+            openio_blob_indexer_gridinit_file_prefix: "{{ namespace }}-"
+            openio_blob_indexer_grigridinit_dir: "/etc/gridinit.d/"
+            openio_blob_indexer_volume: "{{ mount.mountpoint }}/{{ namespace }}/rawx-{{ openio_blob_indexer_serviceid }}"
+            openio_blob_indexer_provision_only: "{{ openio_maintenance_mode }}"
+          with_items: "{{ openio_data_mounts }}"
+          loop_control:
+            loop_var: mount
+            index_var: idx
+
+        - name: Install rdir
+          include_role:
+            name: rdir
+          vars:
+            openio_rdir_namespace: "{{ namespace }}"
+            openio_rdir_serviceid: "{{ idx }}"
+            openio_rdir_bind_port: "{{ openio_rdir_global_bind_port + idx }}"
+            openio_rdir_gridinit_file_prefix: "{{ namespace }}-"
+            openio_rdir_grigridinit_dir: "/etc/gridinit.d/"
+            openio_rdir_volume: "{{ mount.mountpoint }}/{{ namespace }}/rdir-{{ openio_rdir_serviceid }}"
+            openio_rdir_provision_only: "{{ openio_maintenance_mode }}"
+          with_items: "{{ openio_data_mounts }}"
+          loop_control:
+            loop_var: mount
+            index_var: idx
+      when:
+        - openio_data_mounts is defined
+        - openio_data_mounts[0]
+
+# TODO healthcheck
+
+###
+
+- name: Install and configure OpenIO oio-blob-rebuilder
+  any_errors_fatal: true
+  hosts: backs
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags:
+    - oio-blob-rebuilder
+
+  roles:
+    - role: oio-blob-rebuilder
+      openio_blob_rebuilder_namespace: "{{ namespace }}"
+      openio_blob_rebuilder_serviceid: "0"
+      openio_blob_rebuilder_gridinit_dir: "/etc/gridinit.d/"
+      openio_blob_rebuilder_gridinit_file_prefix: "{{ namespace }}-"
+      openio_blob_rebuilder_provision_only: "{{ openio_maintenance_mode }}"
+      openio_blob_rebuilder_event_agent_url: "beanstalk://{{ openio_bind_address }}:6014"
+
+  tasks: []   # TODO healthcheck
+###
+
+- name: Install and configure OpenIO oio-event-agent
+  any_errors_fatal: true
+  hosts: oio-event-agent
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags:
+    - oio-event-agent
+
+  roles:
+    - role: oio-event-agent
+      openio_event_agent_namespace: "{{ namespace }}"
+      openio_event_agent_serviceid: "0"
+      openio_event_agent_gridinit_dir: "/etc/gridinit.d/"
+      openio_event_agent_gridinit_file_prefix: "{{ namespace }}-"
+      openio_event_agent_provision_only: "{{ openio_maintenance_mode }}"
+
+  tasks: []   # TODO healthcheck
+###
+
+- name: Install and configure OpenIO conscience-agent
+  any_errors_fatal: true
+  hosts: backs
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags: conscience-agent
+
+  roles:
+    - role: conscienceagent
+      openio_conscienceagent_namespace: "{{ namespace }}"
+      openio_conscienceagent_serviceid: "0"
+      openio_conscienceagent_gridinit_dir: "/etc/gridinit.d/"
+      openio_conscienceagent_gridinit_file_prefix: "{{ namespace }}-"
+      openio_conscienceagent_provision_only: "{{ openio_maintenance_mode }}"
+
+  tasks: []   # TODO healthcheck
+###
+
+- name: "Bootstrapping OpenIO namespace"
+  any_errors_fatal: true
+  hosts: conscience[0]
+  become: true
+  gather_facts: false
+  environment: "{{ openio_environment }}"
+  tags: bootstrap
+
+  tasks:
+    - block:
+        - name: "Restart all meta0"
+          command: "/usr/bin/gridinit_cmd restart @meta0"
+          async: 45
+          poll: 5
+          register: _restart_m0
+          delegate_to: "{{ meta }}"
+          with_items: "{{ groups['meta0'] }}"
+          loop_control:
+            loop_var: meta
+
+        - name: "Restart all meta1"
+          command: "/usr/bin/gridinit_cmd restart @meta1"
+          async: 45
+          poll: 5
+          register: _restart_m1
+          delegate_to: "{{ meta }}"
+          with_items: "{{ groups['meta1'] }}"
+          loop_control:
+            loop_var: meta
+
+        - name: "Unlock scores meta0 & meta1"
+          command: "openio cluster unlockall meta0 meta1 --oio-ns={{ namespace }}"
+
+        - name: "Wait for meta0 & meta1 services"
+          command: "openio cluster wait -d {{ openio_timeout_sensible_score | default(600) }} meta0 meta1 --oio-ns={{ namespace }} -s {{ openio_minimal_score_for_directory_bootstrap | default(50) }}"
+
+        - name: "Bootstrapping OpenIO namespace {{ namespace }} with {{ openio_replicas }} replicas"
+          command: "openio --oio-ns={{ namespace }} directory bootstrap --replicas {{ openio_replicas }} --no-rdir"
+          register: meta_bootstrap
+          until: meta_bootstrap.rc == 0
+          retries: 3
+          delay: 5
+
+        - name: "Restart all meta0"
+          command: "/usr/bin/gridinit_cmd restart @meta0"
+          async: 45
+          poll: 5
+          register: _restart_m0
+          delegate_to: "{{ meta }}"
+          with_items: "{{ groups['meta0'] }}"
+          loop_control:
+            loop_var: meta
+
+        - name: "Restart all meta1"
+          command: "/usr/bin/gridinit_cmd restart @meta1"
+          async: 45
+          poll: 5
+          register: _restart_m1
+          delegate_to: "{{ meta }}"
+          with_items: "{{ groups['meta1'] }}"
+          loop_control:
+            loop_var: meta
+
+        - name: "Unlock all scores"
+          command: "openio cluster unlockall --oio-ns={{ namespace }}"
+
+        - name: "Wait for rawx & rdir services"
+          command: "openio cluster wait -d {{ openio_timeout_sensible_score | default(600) }} rawx rdir --oio-ns={{ namespace }} -s {{ openio_minimal_score_for_volume_admin_bootstrap | default(50) }}"
+
+        - name: "Bootstrapping Reverse Directory for namespace {{ namespace }}"
+          command: "openio --oio-ns={{ namespace }} rdir bootstrap {{ service_type }}"
+          with_items:
+            - "rawx"
+            - "meta2"
+          loop_control:
+            loop_var: service_type
+      when:
+        - openio_bootstrap is defined
+        - openio_bootstrap
+        - not ansible_check_mode
+        - not openio_maintenance_mode
+###
 ...

@@ -4,10 +4,10 @@ NC="\e[39m"
 
 N=${1:-3}
 usage(){
-    echo "Usage: $0 [N containers]" 
+    echo "Usage: $0 [N containers]"
     echo "	N: Number of container"
     echo ""
-    echo -e "$YELLOW Your user needs to be in th \"docker\" group $NC"
+    echo -e "$YELLOW Your user needs to be in the \"docker\" group $NC"
     exit 1
 }
 
@@ -16,7 +16,7 @@ if [[ $? == 1 ]]; then
   usage
 fi
 
-echo -e "${YELLOW}Replace with the following in the file named \"01_inventory.ini\" $NC"
+echo -e "${YELLOW}Replace with the following in the file named \"inventory.ini\" $NC"
 echo '[all]'
 for i in $(seq 1 $N); do
   ID=$(docker run \

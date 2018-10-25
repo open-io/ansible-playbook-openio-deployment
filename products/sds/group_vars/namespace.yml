@@ -1,0 +1,14 @@
+---
+openio_namespace_conscience_url: "{{ hostvars[groups['conscience'][0]]['openio_bind_address'] }}:6000"
+openio_namespace_zookeeper_url: "{{ groups['zookeeper']
+  | map('extract', hostvars, ['openio_bind_address']) \
+  | join(':6005,') }}:6005"
+openio_namespace_oioproxy_url: "{{ openio_bind_address }}:6006"
+openio_namespace_event_agent_url: "beanstalk://{{ openio_bind_address }}:6014"
+openio_namespace_ecd_url: "{% if groups['ecd'] | length > 0 %}{{ openio_bind_address }}:6017{% endif %}"
+openio_namespace_meta1_digits: "{{ namespace_meta1_digits }}"
+
+openio_namespace_storage_policy: "{{ namespace_storage_policy }}"
+openio_namespace_chunk_size_megabytes: "{{ namespace_chunk_size_megabytes | int }}"
+
+...

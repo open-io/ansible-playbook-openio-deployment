@@ -1,0 +1,17 @@
+---
+- name: Generate oioproxy inventory
+  set_fact:
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'services': new_item } } }, recursive=true) }}"
+  vars:
+    new_item:
+      oioproxy:
+        - id: "{{ namespace }}-oioproxy-{{ openio_oioproxy_serviceid }}"
+          ip: "{{ openio_oioproxy_bind_address }}"
+          port: "{{ openio_oioproxy_bind_port }}"
+          partition: ""
+          volume: ""
+          location: ""
+          config: {}
+  when:
+    - "'oioproxy' in group_names"
+...

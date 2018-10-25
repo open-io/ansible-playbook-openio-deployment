@@ -1,0 +1,22 @@
+---
+- name: "Install rsyslog from {{ ansible_distribution_release }} repository"
+  apt:
+    name: rsyslog
+    state: latest
+    default_release: "{{ ansible_distribution_release }}"
+    update_cache: true
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: "Install needed packages"
+  apt:
+    name: "{{ pkg }}"
+    update_cache: true
+  with_items:
+    - netcat
+    - python-kazoo
+    - openio-sds-logrotate
+    - openio-sds-rsyslog
+  loop_control:
+    loop_var: pkg
+  ignore_errors: "{{ ansible_check_mode }}"
+...

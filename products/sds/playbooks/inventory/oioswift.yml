@@ -1,0 +1,17 @@
+---
+- name: Generate oioswift inventory
+  set_fact:
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'services': new_item } } }, recursive=true) }}"
+  vars:
+    new_item:
+      oioswift:
+        - id: "{{ namespace }}-oioswift-{{ openio_oioswift_serviceid }}"
+          ip: "{{ openio_oioswift_bind_address }}"
+          port: "{{ openio_oioswift_bind_port }}"
+          partition: ""
+          volume: ""
+          location: ""
+          config: {}
+  when:
+    - "'oioswift' in group_names"
+...

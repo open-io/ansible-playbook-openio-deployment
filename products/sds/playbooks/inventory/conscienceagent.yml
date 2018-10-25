@@ -1,0 +1,17 @@
+---
+- name: Generate conscienceagent inventory
+  set_fact:
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'services': new_item } } }, recursive=true) }}"
+  vars:
+    new_item:
+      conscienceagent:
+        - id: "{{ namespace }}-conscienceagent-{{ openio_conscienceagent_serviceid }}"
+          ip: ""
+          port: 0
+          partition: ""
+          volume: ""
+          location: ""
+          config: {}
+  when:
+    - "'backs' in group_names"
+...

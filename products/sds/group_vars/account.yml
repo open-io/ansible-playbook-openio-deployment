@@ -1,0 +1,7 @@
+---
+openio_account_location: "{{ openio_location_room | default ('') }}{{ openio_location_rack | default ('') }}{{ openio_location_server | default ('') }}{{ openio_account_serviceid }}"
+openio_account_bind_address: "{{ openio_bind_address }}"
+openio_account_sentinels_hosts: "{{ groups['redis'] \
+  | map('extract', hostvars, ['openio_bind_address']) \
+  | join(':6012,') }}:6012"
+...

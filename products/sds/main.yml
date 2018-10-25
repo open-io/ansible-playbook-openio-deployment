@@ -7,14 +7,6 @@
   import_playbook: playbooks/install_basic_needs.yml
   tags: base
 
-- name: account
-  import_playbook: playbooks/account.yml
-  tags: account
-
-- name: zookeeper
-  import_playbook: playbooks/zookeeper.yml
-  tags: zk
-
 - name: SDS
   import_playbook: playbooks/openiosds.yml
   tags: sds
@@ -26,4 +18,8 @@
 - name: Post install
   import_playbook: playbooks/postinstall.yml
   tags: post
+
+- name: Inventory
+  import_playbook: playbooks/inventory.yml
+  tags: inventory
 ...

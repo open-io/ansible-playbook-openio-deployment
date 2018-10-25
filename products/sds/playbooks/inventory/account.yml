@@ -1,0 +1,17 @@
+---
+- name: Generate account inventory
+  set_fact:
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'services': new_item } } }, recursive=true) }}"
+  vars:
+    new_item:
+      account:
+        - id: "{{ namespace }}-account-{{ openio_account_serviceid }}"
+          ip: "{{ openio_bind_address }}"
+          port: "{{ openio_account_bind_port }}"
+          partition: ""
+          volume: ""
+          location: "{{ openio_account_location }}"
+          config: {}
+  when:
+    - "'account' in group_names"
+...

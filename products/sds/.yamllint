@@ -56,7 +56,7 @@ rules:
   key-ordering: disable
   line-length:
     level: error
-    max: 120
+    max: 300
     allow-non-breakable-words: true
     allow-non-breakable-inline-mappings: false
   new-line-at-end-of-file: enable
