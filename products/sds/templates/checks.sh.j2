@@ -23,11 +23,11 @@ echo -e $YELLOW Display the cluster status. $NC
 openio cluster list
 echo --
 
-echo -e $YELLOW Upload the /etc/passwd into the bucket MY_CONTAINER of the MY_ACCOUNT project. $NC
+echo -e $YELLOW Upload the /etc/passwd  file to the bucket MY_CONTAINER of the project MY_ACCOUNT. $NC
 openio object create MY_CONTAINER /etc/passwd --oio-account MY_ACCOUNT
 echo --
 
-echo -e $YELLOW Get some informations about your object. $NC
+echo -e $YELLOW Get some information about your object. $NC
 openio container show MY_CONTAINER --oio-account MY_ACCOUNT
 echo --
 
@@ -65,7 +65,7 @@ echo -e $YELLOW Create a bucket 'mybucket'. $NC
 aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 mb s3://mybucket
 echo --
 
-echo -e $YELLOW Upload the '/etc/passwd' into the bucket 'mybucket'. $NC
+echo -e $YELLOW Upload the '/etc/passwd' file to the bucket 'mybucket'. $NC
 aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 cp /etc/passwd s3://mybucket
 echo --
 
@@ -73,7 +73,7 @@ echo -e $YELLOW List your buckets. $NC
 aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 ls s3://mybucket --recursive --human-readable --summarize
 echo --
 
-echo -e $YELLOW Save the data stored in the given object into the file given. $NC
+echo -e $YELLOW Save the data stored in the given object to the given file. $NC
 aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 cp s3://mybucket/passwd /tmp/passwd.aws
 head /tmp/passwd.aws
 echo --
