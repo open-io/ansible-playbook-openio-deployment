@@ -64,7 +64,7 @@
   name: oio-blob-indexer
 
 - src: https://github.com/open-io/ansible-role-openio-oio-event-agent.git
-  version: ce4ff8770447ed95c6cc9518d28588407b395517
+  version: 2ec7a8c67d936d2f7b85387c4a03198c286d8c0c
   name: oio-event-agent
 
 - src: https://github.com/open-io/ansible-role-openio-rawx.git
