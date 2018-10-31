@@ -111,6 +111,15 @@
     - name: Gathering facts
       setup: {}
 
+    - name: Hostnames in the group openio have to be unique
+      assert:
+        that: >
+          groups['openio'] | map('extract', hostvars, ['ansible_hostname']) | list | count
+          ==
+          groups['openio'] | map('extract', hostvars, ['ansible_hostname']) | list | unique | count
+      delegate_to: localhost
+      run_once: true
+
     - name: Get running process
       command: "/bin/ps auxww"
       changed_when: false
