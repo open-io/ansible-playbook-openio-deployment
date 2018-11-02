@@ -28,7 +28,7 @@
   name: oioswift
 
 - src: https://github.com/open-io/ansible-role-openio-ecd.git
-  version: 221144ad18113290bf51cf68b7b209af9e082dec
+  version: 3bcc2dbbd1ead2e5b4dbf8f64e9e99a2e56ddf45
   name: ecd
 
 - src: https://github.com/open-io/ansible-role-openio-conscience.git
