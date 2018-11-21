@@ -18,4 +18,8 @@
 - src: http://github.com/open-io/ansible-role-openio-oiofs
   version: 15b894af25b9ee9cd2ff6176311a21444a201025
   name: oiofs
+
+- src: http://github.com/open-io/ansible-role-openio-namespace
+  version: 9ccb37fa87c8e2a43ca8da9c7485b14fb842480a
+  name: namespace
 ...
