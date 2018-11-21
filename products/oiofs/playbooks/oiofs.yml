@@ -7,7 +7,7 @@
   environment: "{{ openio_environment }}"
 
   pre_tasks:
-    - name: namespace
+    - name: Namespace global configuration
       include_role:
         name: namespace
       vars:
@@ -15,7 +15,7 @@
         openio_namespace_conscience_url: "{{ openio_sds_conscience_address }}:{{ openio_sds_conscience_port }}"
         openio_namespace_oioproxy_url: "{{ play_mount.oioproxy_host }}:{{ play_mount.oioproxy_port }}"
         openio_namespace_ecd_url: "{{ play_mount.ecd_host }}:{{ play_mount.ecd_port }}"
-      with_items: oiofs_mountpoints
+      with_items: "{{ oiofs_mountpoints }}"
       loop_control:
         loop_var: play_mount
 
