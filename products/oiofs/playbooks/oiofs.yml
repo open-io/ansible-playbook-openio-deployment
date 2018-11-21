@@ -54,7 +54,7 @@
                   --oio-account {{ item.account }} \
                   --oio-ns {{ item.namespace }}
                   -c Created -f value"
-      with_items: "{{ oiofs_mounts }}"
+      with_items: "{{ oiofs_mountpoints }}"
       register: _openio_container_create
       changed_when: _openio_container_create.stdout == "True"
 
