@@ -7,31 +7,21 @@
   environment: "{{ openio_environment }}"
 
   pre_tasks:
-    - name: Check namespace file presence
-      stat:
-        path: "/etc/oio/sds.conf.d/{{ openio_sds_namespace }}"
-      register: "_openio_namespacefile_exist"
-
-    - name: Configure namespace
-      block:
-        - name: Ensures namespace directory exists
-          file:
-            dest: "/etc/oio/sds.conf.d"
-            state: directory
-
-        - name: Create namespace file
-          copy:
-            content: |
-              [{{ openio_sds_namespace }}]
-              conscience={{ openio_sds_conscience_address }}:6000
-              proxy={{ openio_sds_oioproxy_address }}:6006
-              ecd={{ openio_sds_ecd_address }}:6017
-            dest: "/etc/oio/sds.conf.d/{{ openio_sds_namespace }}"
-
-      when: not _openio_namespacefile_exist.stat.exists
+    - name: namespace
+      include_role:
+        name: namespace
+      vars:
+        openio_namespace_name: "{{ play_mount.namespace }}"
+        openio_namespace_conscience_url: "{{ openio_sds_conscience_address }}:{{ openio_sds_conscience_port }}"
+        openio_namespace_oioproxy_url: "{{ play_mount.oioproxy_host }}:{{ play_mount.oioproxy_port }}"
+        openio_namespace_ecd_url: "{{ play_mount.ecd_host }}:{{ play_mount.ecd_port }}"
+      with_items: oiofs_mountpoints
+      loop_control:
+        loop_var: play_mount
 
   roles:
     - role: repositories
+      openio_repository_openstack_release: "{{ openio_repository_openstack_release }}"
       openio_repository_products:
         sds:
           release: "{{ openio_sds_release }}"
@@ -63,7 +53,7 @@
     - name: Create container in OpenIO SDS
       command: "openio container create {{ item.container }} \
                   --oio-account {{ item.account }} \
-                  --oio-ns {{ openio_sds_namespace }}
+                  --oio-ns {{ item.namespace }}
                   -c Created -f value"
       with_items: "{{ oiofs_mounts }}"
       register: _openio_container_create
