@@ -8,7 +8,8 @@ openio_oiofs_customer_password: bar
 # Namespace on the SDS cluster
 openio_sds_namespace: OPENIO
 # Package repository to use
-openio_sds_release: "18.04"
+openio_sds_release: "18.10"
+openio_repository_openstack_release: "queens"
 
 # Conscience SDS
 openio_sds_conscience_address: 172.17.0.4
@@ -24,12 +25,19 @@ openio_sds_sentinels_addresses:
   - 172.17.0.4:6012
 
 # List of oiofs mounts
-oiofs_mounts:
-  - path: /mnt/oiofs-MY_CONTAINER-MY_ACCOUNT
+oiofs_mountpoints:
+  - path: /mnt/oiofs-OPENIO-MY_CONTAINER-MY_ACCOUNT
+    namespace: OPENIO
     account: MY_ACCOUNT
     container: MY_CONTAINER
     retry_delay: 1000
     sds_retry_delay: 1000
     fuse_max_retries: 200
     max_flush_thread: "{{ ansible_processor_vcpus / 2 | int }}"
+    redis_sentinel_servers: "{{ openio_sds_sentinels_addresses }}"
+    redis_sentinel_name: "{{ openio_sds_sentinels_name }}"
+    ecd_host: "{{ openio_sds_ecd_address }}"
+    oioproxy_host: "{{ openio_sds_oioproxy_address }}"
+    cache_directory: "/mnt/oiofs-cache-OPENIO-MY_CONTAINER-MY_ACCOUNT"
+    state: present
 ...
