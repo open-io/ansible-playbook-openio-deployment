@@ -13,6 +13,7 @@ openio_repository_openstack_release: "queens"
 
 # Conscience SDS
 openio_sds_conscience_address: 172.17.0.4
+openio_sds_conscience_port: 6000
 # Proxy SDS (deployed on oiofs nodes)
 openio_sds_oioproxy_address: "{{ ansible_default_ipv4.address }}"
 # Erasure Coding Daemon (deployed on oiofs nodes)
@@ -37,7 +38,9 @@ oiofs_mountpoints:
     redis_sentinel_servers: "{{ openio_sds_sentinels_addresses }}"
     redis_sentinel_name: "{{ openio_sds_sentinels_name }}"
     ecd_host: "{{ openio_sds_ecd_address }}"
+    ecd_port: 6017
     oioproxy_host: "{{ openio_sds_oioproxy_address }}"
+    oioproxy_port: 6006
     cache_directory: "/mnt/oiofs-cache-OPENIO-MY_CONTAINER-MY_ACCOUNT"
     state: present
 ...
