@@ -80,6 +80,6 @@
   name: conscienceagent
 
 - src: https://github.com/open-io/ansible-role-openio-namespace.git
-  version: ad949dd2ed75f2ef8d5a49b635d9c346ebcf4da2
+  version: c085dec00f0d43cf75dce0d89fa313cd38911dd4
   name: namespace
 ...
