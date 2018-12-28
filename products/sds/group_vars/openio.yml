@@ -24,7 +24,7 @@ openio_oioswift_users:
   - name: "demo:demo"
     password: "DEMO_PASS"
     roles:
-      - member
+      - admin
 
 # sysctl
 openio_manage_sysctl: true
@@ -47,6 +47,8 @@ openio_sysctl_entries:
   net.ipv4.tcp_timestamps: 1
   net.ipv4.tcp_tw_reuse: 1
   net.ipv4.tcp_window_scaling: 1
+  kernel.pid_max: 196608
+
 
 ########
 # Special needs

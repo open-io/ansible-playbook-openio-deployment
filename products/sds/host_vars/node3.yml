@@ -4,4 +4,5 @@ openio_data_mounts:
 openio_metadata_mounts:
   - { partition: '/dev/sdb', mountpoint: "/var/lib/oio/sds" }
 #openio_bind_address: "172.17.0.33"
+openio_bind_address: 172.17.0.33
 ...

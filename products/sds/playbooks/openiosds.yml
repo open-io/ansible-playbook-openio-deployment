@@ -1,10 +1,60 @@
 ---
-- name: Install requirements to installation on nodes
+- name: OpenIO SDS - Collect facts needed
   any_errors_fatal: true
   hosts: openio
   become: true
-  gather_facts: true
   environment: "{{ openio_environment }}"
+  tags:
+    - account
+    - bootstrap
+    - beanstalkd
+    - conscience
+    - conscience-agent
+    - ecd
+    - meta
+    - meta0
+    - meta1
+    - meta2
+    - namespace
+    - oio-blob-rebuilder
+    - oio-blob-rebuilder
+    - oio-event-agent
+    - oioproxy
+    - rawx
+    - rdir
+    - rdir
+    - redis
+    - zookeeper
+  tasks:
+    - name: Gathering needed network facts
+      setup:
+        gather_subset: network
+
+    - name: Gathering needed hardware facts
+      setup:
+        gather_subset: hardware
+        filter: "{{ item }}"
+      with_items:
+        - ansible_memtotal_mb
+        - ansible_processor_vcpus
+
+    - name: Gathering needed virtual facts
+      setup:
+        gather_subset: virtual
+        filter: "{{ item }}"
+      with_items:
+        - ansible_virtualization_type
+
+    - name: set openio_bind_address as fact
+      set_fact:
+        openio_bind_address: "{{ openio_bind_address }}"
+
+- name: OpenIO SDS - Install requirements to installation on nodes
+  any_errors_fatal: true
+  hosts: openio
+  become: true
+  environment: "{{ openio_environment }}"
+
   tasks:
     - name: "Include {{ ansible_distribution }} tasks"
       include_tasks: "{{ item }}"
@@ -32,22 +82,69 @@
         owner: openio
         group: openio
         mode: 0750
-        recurse: true
       with_items:
         - "{{ openio_data_mounts | default( [] ) }}"
         - "{{ openio_metadata_mounts | default( [] ) }}"
 
-    - name: set openio_bind_address as fact
-      set_fact:
-        openio_bind_address: "{{ openio_bind_address }}"
-
 ###
 
-- name: Install and configure OpenIO Namespace
+- name: OpenIO SDS - Install and configure OpenIO redis
+  any_errors_fatal: true
+  hosts: redis
+  become: true
+  environment: "{{ openio_environment }}"
+  tags: redis
+
+  roles:
+    - role: redis
+      openio_redis_namespace: "{{ namespace }}"
+      openio_redis_gridinit_dir: "/etc/gridinit.d/"
+      openio_redis_gridinit_file_prefix: "{{ namespace }}-"
+      openio_redis_provision_only: "{{ openio_maintenance_mode }}"
+      openio_redis_type: "redis"
+      openio_redis_bind_port: "{{ openio_redis_server_bind_port }}"
+      openio_redis_volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/{{ openio_redis_type }}-{{ openio_redis_serviceid }}"
+      when:
+        - openio_metadata_mounts is defined
+        - openio_metadata_mounts[0]
+
+    - role: redis
+      openio_redis_namespace: "{{ namespace }}"
+      openio_redis_gridinit_dir: "/etc/gridinit.d/"
+      openio_redis_gridinit_file_prefix: "{{ namespace }}-"
+      openio_redis_provision_only: "{{ openio_maintenance_mode }}"
+      openio_redis_type: "redissentinel"
+      openio_redis_bind_port: "{{ openio_redis_sentinel_bind_port }}"
+      openio_redis_volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/{{ openio_redis_type }}-{{ openio_redis_serviceid }}"
+      when:
+        - openio_metadata_mounts is defined
+        - openio_metadata_mounts[0]
+
+
+  tasks: []   # TODO healthcheck
+###
+
+- name: OpenIO SDS - Install and configure OpenIO Proxy
+  any_errors_fatal: true
+  hosts: oioproxy
+  become: true
+  environment: "{{ openio_environment }}"
+  tags: oioproxy
+
+  roles:
+    - role: oioproxy
+      openio_oioproxy_namespace: "{{ namespace }}"
+      openio_oioproxy_gridinit_file_prefix: "{{ namespace }}-"
+      openio_oioproxy_gridinit_dir: "/etc/gridinit.d/"
+      openio_oioproxy_provision_only: "{{ openio_maintenance_mode }}"
+
+  tasks: []   # TODO healthcheck
+###
+
+- name: OpenIO SDS - Install and configure OpenIO Namespace
   any_errors_fatal: true
   hosts: namespace
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags: namespace
 
@@ -56,11 +153,10 @@
       openio_namespace_name: "{{ namespace }}"
 ###
 
-- name: Install and configure OpenIO zookeeper
+- name: OpenIO SDS - Install and configure OpenIO zookeeper
   any_errors_fatal: true
   hosts: zookeeper
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags: zookeeper
 
@@ -96,6 +192,7 @@
             | map('extract', hostvars, ['openio_bind_address'])\
             | list }}"
           run_once: true
+          changed_when: false
 
         - name: "Bootstrapping ZooKeeper for namespace {{ namespace }}"
           command: "/usr/bin/zk-bootstrap.py {{ namespace }}"
@@ -124,48 +221,10 @@
         - not ansible_check_mode
 ###
 
-- name: Install and configure OpenIO redis
-  any_errors_fatal: true
-  hosts: redis
-  become: true
-  gather_facts: false
-  environment: "{{ openio_environment }}"
-  tags: redis
-
-  roles:
-    - role: redis
-      openio_redis_namespace: "{{ namespace }}"
-      openio_redis_gridinit_dir: "/etc/gridinit.d/"
-      openio_redis_gridinit_file_prefix: "{{ namespace }}-"
-      openio_redis_provision_only: "{{ openio_maintenance_mode }}"
-      openio_redis_type: "redis"
-      openio_redis_bind_port: "{{ openio_redis_server_bind_port }}"
-      openio_redis_volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/{{ openio_redis_type }}-{{ openio_redis_serviceid }}"
-      when:
-        - openio_metadata_mounts is defined
-        - openio_metadata_mounts[0]
-
-    - role: redis
-      openio_redis_namespace: "{{ namespace }}"
-      openio_redis_gridinit_dir: "/etc/gridinit.d/"
-      openio_redis_gridinit_file_prefix: "{{ namespace }}-"
-      openio_redis_provision_only: "{{ openio_maintenance_mode }}"
-      openio_redis_type: "redissentinel"
-      openio_redis_bind_port: "{{ openio_redis_sentinel_bind_port }}"
-      openio_redis_volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/{{ openio_redis_type }}-{{ openio_redis_serviceid }}"
-      when:
-        - openio_metadata_mounts is defined
-        - openio_metadata_mounts[0]
-
-
-  tasks: []   # TODO healthcheck
-###
-
-- name: Install and configure OpenIO beanstalkd
+- name: OpenIO SDS - Install and configure OpenIO beanstalkd
   any_errors_fatal: true
   hosts: backs
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags: beanstalkd
 
@@ -184,11 +243,10 @@
   tasks: []   # TODO healthcheck
 ###
 
-- name: Install and configure OpenIO Conscience
+- name: OpenIO SDS - Install and configure OpenIO Conscience
   any_errors_fatal: true
   hosts: conscience
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags: conscience
 
@@ -203,29 +261,10 @@
   tasks: []   # TODO healthcheck
 ###
 
-- name: Install and configure OpenIO Proxy
-  any_errors_fatal: true
-  hosts: oioproxy
-  become: true
-  gather_facts: false
-  environment: "{{ openio_environment }}"
-  tags: oioproxy
-
-  roles:
-    - role: oioproxy
-      openio_oioproxy_namespace: "{{ namespace }}"
-      openio_oioproxy_gridinit_file_prefix: "{{ namespace }}-"
-      openio_oioproxy_gridinit_dir: "/etc/gridinit.d/"
-      openio_oioproxy_provision_only: "{{ openio_maintenance_mode }}"
-
-  tasks: []   # TODO healthcheck
-###
-
-- name: Install and configure OpenIO Account
+- name: OpenIO SDS - Install and configure OpenIO Account
   any_errors_fatal: true
   hosts: account
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags: account
 
@@ -239,11 +278,10 @@
   tasks: []   # TODO healthcheck
 ###
 
-- name: Install and configure OpenIO meta0
+- name: OpenIO SDS - Install and configure OpenIO meta0
   any_errors_fatal: true
   hosts: meta0
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags:
     - meta0
@@ -271,11 +309,10 @@
 
 ###
 
-- name: Install and configure OpenIO meta1
+- name: OpenIO SDS - Install and configure OpenIO meta1
   any_errors_fatal: true
   hosts: meta1
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags:
     - meta1
@@ -322,11 +359,10 @@
 
 ###
 
-- name: Install and configure OpenIO meta2
+- name: OpenIO SDS - Install and configure OpenIO meta2
   any_errors_fatal: true
   hosts: meta2
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags:
     - meta2
@@ -373,11 +409,10 @@
 
 ###
 
-- name: Install and configure OpenIO rawx
+- name: OpenIO SDS - Install and configure OpenIO rawx
   any_errors_fatal: true
   hosts: rawx
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags:
     - rawx
@@ -399,7 +434,24 @@
           loop_control:
             loop_var: mount
             index_var: idx
+      when:
+        - openio_data_mounts is defined
+        - openio_data_mounts[0]
 
+# TODO healthcheck
+
+###
+
+- name: OpenIO SDS - Install and configure OpenIO oio-blob-indexer
+  any_errors_fatal: true
+  hosts: rawx
+  become: true
+  environment: "{{ openio_environment }}"
+  tags:
+    - oio-blob-indexer
+
+  tasks:
+    - block:
         - name: Install oio-blob-indexer
           include_role:
             name: oio-blob-indexer
@@ -415,6 +467,24 @@
             loop_var: mount
             index_var: idx
 
+      when:
+        - openio_data_mounts is defined
+        - openio_data_mounts[0]
+
+# TODO healthcheck
+
+###
+
+- name: OpenIO SDS - Install and configure OpenIO rdir
+  any_errors_fatal: true
+  hosts: rawx
+  become: true
+  environment: "{{ openio_environment }}"
+  tags:
+    - rdir
+
+  tasks:
+    - block:
         - name: Install rdir
           include_role:
             name: rdir
@@ -438,11 +508,10 @@
 
 ###
 
-- name: Install and configure OpenIO oio-blob-rebuilder
+- name: OpenIO SDS - Install and configure OpenIO oio-blob-rebuilder
   any_errors_fatal: true
   hosts: backs
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags:
     - oio-blob-rebuilder
@@ -459,11 +528,10 @@
   tasks: []   # TODO healthcheck
 ###
 
-- name: Install and configure OpenIO oio-event-agent
+- name: OpenIO SDS - Install and configure OpenIO oio-event-agent
   any_errors_fatal: true
   hosts: oio-event-agent
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags:
     - oio-event-agent
@@ -479,11 +547,28 @@
   tasks: []   # TODO healthcheck
 ###
 
-- name: Install and configure OpenIO conscience-agent
+- name: Install and configure OpenIO ecd
+  any_errors_fatal: true
+  hosts: ecd
+  become: true
+  environment: "{{ openio_environment }}"
+  tags:
+    - ecd
+
+  roles:
+    - role: ecd
+      openio_ecd_namespace: "{{ namespace }}"
+      openio_ecd_serviceid: "0"
+      openio_ecd_gridinit_dir: "/etc/gridinit.d/"
+      openio_ecd_gridinit_file_prefix: "{{ namespace }}-"
+      openio_ecd_provision_only: "{{ openio_maintenance_mode }}"
+  tasks: []   # TODO healthcheck
+###
+
+- name: OpenIO SDS - Install and configure OpenIO conscience-agent
   any_errors_fatal: true
   hosts: backs
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags: conscience-agent
 
@@ -498,11 +583,10 @@
   tasks: []   # TODO healthcheck
 ###
 
-- name: "Bootstrapping OpenIO namespace"
+- name: OpenIO SDS - "Bootstrapping OpenIO namespace"
   any_errors_fatal: true
   hosts: conscience[0]
   become: true
-  gather_facts: false
   environment: "{{ openio_environment }}"
   tags: bootstrap
 

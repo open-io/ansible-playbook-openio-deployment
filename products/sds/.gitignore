@@ -2,9 +2,11 @@ roles/*
 *.retry
 *.pyc
 
+venv/*
 
 # safe playbook update
 #group_vars/*
 #host_vars/*
 #inventory.ini
 .cache
+*tests

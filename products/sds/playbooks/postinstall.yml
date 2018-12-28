@@ -1,12 +1,23 @@
 ---
-- name: Configure node for test
+- name: POSTINSTALL - Configure node for test
   hosts: oioswift
   become: true
-  gather_facts: true
   any_errors_fatal: true
   environment: "{{ openio_environment }}"
 
   pre_tasks:
+    - name: Gathering network facts
+      setup:
+        gather_subset: network
+
+    - name: Gathering needed facts
+      setup:
+        gather_subset: min
+        filter: "{{ item }}"
+      with_items:
+        - ansible_distribution
+        - ansible_os_family
+
     - name: set openio_bind_address as fact
       set_fact:
         openio_bind_address: "{{ openio_bind_address }}"
@@ -19,6 +30,40 @@
     - name: Install OpenStack client
       package:
         name: python-openstackclient
+      ignore_errors: "{{ ansible_check_mode }}"
+
+    - name: Get AWS credentials (Keystone)
+      block:
+        - name: Generate AWS credentials
+          command: openstack ec2 credentials create -f json
+          run_once: true
+          register: cred
+          environment:
+            OS_PROJECT_DOMAIN_NAME: Default
+            OS_USER_DOMAIN_NAME: Default
+            OS_PROJECT_NAME: demo
+            OS_USERNAME: demo
+            OS_PASSWORD: "{{ openio_keystone_demo_password }}"
+            OS_AUTH_URL: "http://{{ openio_bind_virtual_address }}:35357"
+            OS_IDENTITY_API_VERSION: 3
+            OS_IMAGE_API_VERSION: 2
+
+        - name: Register AWS creds
+          no_log: "{{ openio_no_log }}"
+          ignore_errors: true
+          register: aws_cred
+          set_fact:
+            access: "{{ (( cred.stdout | from_json ) | selectattr('Field', 'match', 'access') | list | first )['Value'] }}"
+            secret: "{{ (( cred.stdout | from_json ) | selectattr('Field', 'match', 'secret') | list | first )['Value'] }}"
+
+        - name: Register AWS creds round 2
+          set_fact:
+            access: "{{ ( cred.stdout | from_json )['access'] }}"
+            secret: "{{ ( cred.stdout | from_json )['secret'] }}"
+          when: aws_cred | failed
+      when:
+        - "'keystone' in groups"
+        - groups['keystone'] | length > 0
       ignore_errors: "{{ ansible_check_mode }}"
 
     - name: Get AWS credentials (Tempauth)

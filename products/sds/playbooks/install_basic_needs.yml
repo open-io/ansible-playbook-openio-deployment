@@ -1,12 +1,37 @@
 ---
-- name: Install requirements
+- name: BASE - Basic requirements to install
   hosts: openio
-  gather_facts: true
   become: true
   any_errors_fatal: true
   environment: "{{ openio_environment }}"
 
+  pre_tasks:
+    - name: Gathering needed facts
+      setup:
+        gather_subset: min
+        filter: "{{ item }}"
+      with_items:
+        - ansible_distribution
+        - ansible_os_family
+        - ansible_system
+        - ansible_lsb
+        - ansible_distribution_release
+        - ansible_distribution_major_version
+
   roles:
+    - role: users
+      openio_users_add:
+        - username: openio
+          uid: "{{ openio_user_openio_uid }}"
+          name: openio account
+          group: openio
+          groups: []
+          home_create: true
+          shell: /bin/bash
+      openio_users_groups:
+        - groupname: openio
+          gid: "{{ openio_group_openio_gid }}"
+
     - role: repositories
       openio_repository_openstack_release: "{{ openio_openstack_distro }}"
       openio_repository_mirror_host: "{{ openio_mirror }}"
@@ -14,16 +39,10 @@
       openio_repository_products:
         sds:
           release: "{{ openio_sds_release | default(hostvars[groups['openio'][0]]['openio_sds_release']) }}"
-    - role: repositories
-      openio_repository_mirror_host: "{{ openio_mirror }}"
-      openio_repository_openstack_release: "{{ openio_openstack_distro }}"
-      openio_repository_no_log: "{{ openio_no_log }}"
-      openio_repository_products:
-        sds:
-          release: "unstable"
-      when: openio_unstable_repo | default(false)
 
     - role: ntp
+      when: ntp_enabled
+
     - role: gridinit
       openio_gridinit_conf_location: "/etc/gridinit.d/{*,*/*}"
       ignore_errors: "{{ ansible_check_mode }}"

@@ -11,12 +11,13 @@ openio_distribution_supported:
   - Raspbian
 
 openio_release_supported:
-  - "18.04"
   - "18.10"
+  - "19.04"
 
 openio_checks_filter:
   apparmor: false
   zookeeper_memory: true
+  reachability: true
 
 ansible_port: 22
 
@@ -42,9 +43,9 @@ ntp_restrict:
 
 # for proxies by example
 openio_environment: {}
-
-# Install require on targets
-openio_manage_os_requirement: true
+  #http_proxy: ""
+  #https_proxy: ""
+  #no_proxy: "{{ groups.openio | map('extract', hostvars, ['openio_bind_address']) | join(', ') }}"
 
 # mirror
 openio_mirror: "mirror.openio.io"
@@ -54,4 +55,7 @@ openio_no_log: false
 
 # openstack distribution
 openio_openstack_distro: "queens"
+
+# Install require on targets
+openio_manage_os_requirement: true
 ...

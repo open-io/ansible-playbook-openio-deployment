@@ -1,10 +1,26 @@
 ---
-- name: Generate inventory files
+- name: POSTINSTALL - Generate inventory files
   hosts: fronts:backs
   become: true
   any_errors_fatal: true
-  gather_facts: true
+  vars:
+    inventory:
+      namespaces: {}
+      created_at: "{{ ansible_date_time.iso8601_micro }}"
 
+  pre_tasks:
+    - name: Gathering network facts
+      setup:
+        gather_subset: network
+
+    - name: Gathering needed facts
+      setup:
+        gather_subset: min
+        filter: "{{ item }}"
+      with_items:
+        - ansible_distribution
+        - ansible_os_family
+        - ansible_date_time
 
   roles:
     - role: namespace
@@ -41,11 +57,6 @@
       when: false
     - role: ecd
       when: false
-
-  vars:
-    inventory:
-      namespaces: {}
-      created_at: "{{ ansible_date_time.iso8601_micro }}"
 
   tasks:
     - include: inventory/namespace.yml
