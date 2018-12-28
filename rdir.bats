@@ -1,7 +1,7 @@
 #! /usr/bin/env bats
 
 @test 'rdir - up' {
-  run nc -zv ${SUT_IP} 6301
+  run nc -zv ${SUT_IP} 6300
   echo "output: "$output
   echo "status: "$status
   [[ "${status}" -eq "0" ]]

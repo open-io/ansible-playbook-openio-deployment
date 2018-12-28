@@ -31,7 +31,7 @@ fi
 readonly requirements="${role_dir}/docker-tests/requirements.yml"
 
 readonly docker_image="cdelgehier/docker_images_ansible"
-readonly image_tag="${docker_image}:2.5_${DISTRIBUTION}_${VERSION}"
+readonly image_tag="${docker_image}:${ANSIBLE_VERSION}_${DISTRIBUTION}_${VERSION}"
 
 # Distribution specific settings
 init="/sbin/init"
@@ -43,7 +43,7 @@ main() {
 
   start_container
 
-  #run_galaxy_install
+  run_galaxy_install
   run_syntax_check
   run_test_playbook
   run_idempotence_test
@@ -64,12 +64,22 @@ main() {
 configure_environment() {
 
   case "${DISTRIBUTION}_${VERSION}" in
-    'centos_7'|'fedora_25')
+    'centos_6')
+      run_opts+=('--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro')
+      ;;
+    'centos_8'|'centos_7'|'fedora_25')
       init=/usr/lib/systemd/systemd
       run_opts+=('--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro')
       ;;
-    'ubuntu_16.04'|'debian_8')
-      run_opts=('--volume=/run' '--volume=/run/lock' '--volume=/tmp' '--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro' '--cap-add=SYS_ADMIN' '--cap-add=NET_ADMIN' '--cap-add=SYS_RESOURCE')
+    'ubuntu_14.04')
+      #run_opts+=('--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro')
+      # Workaround for issue when the host operating system has SELinux
+      if [ -x '/usr/sbin/getenforce' ]; then
+        run_opts+=('--volume=/sys/fs/selinux:/sys/fs/selinux:ro')
+      fi
+      ;;
+    'ubuntu_18.04'|'ubuntu_16.04'|'debian_8')
+      run_opts=('--volume=/run' '--volume=/run/lock' '--volume=/tmp' '--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro' '--cap-add=NET_ADMIN' '--cap-add=SYS_ADMIN' '--cap-add=SYS_RESOURCE')
 
       #if [ -x '/usr/sbin/getenforce' ]; then
       #  run_opts+=('--volume=/sys/fs/selinux:/sys/fs/selinux:ro')
@@ -95,6 +105,7 @@ start_container() {
   docker run --detach \
     "${run_opts[@]}" \
     --volume="${PWD}:${role_dir}:ro" \
+    -e IPVAGRANT=${IPVAGRANT:=""} \
     "${image_tag}" \
     "${init}" \
     > "${container_id}"
@@ -145,13 +156,13 @@ run_test_playbook() {
 }
 
 run_galaxy_install() {
-  log "uunning ansible-galaxy install"
-  exxy_installec_container ansible-galaxy install -r "${requirements}"
+  log "Running ansible-galaxy install"
+  exec_container ansible-galaxy install -r "${requirements}"
   log "Requirements installed"
 }
 
 run_idempotence_test() {
-  log 'Running idempotence test' 
+  log 'Running idempotence test'
   local output
   output="$(mktemp)"
 
@@ -190,4 +201,3 @@ log() {
 #}}}
 
 main "${@}"
-

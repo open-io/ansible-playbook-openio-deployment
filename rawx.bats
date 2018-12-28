@@ -1,7 +1,7 @@
 #! /usr/bin/env bats
 
 @test 'rawx - status' {
-  run curl -s ${SUT_IP}:6201/stat
+  run curl -s ${SUT_IP}:6200/stat
   echo "output: "$output
   echo "status: "$status
   [[ "${status}" -eq "0" ]]

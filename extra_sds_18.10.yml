@@ -1,0 +1,20 @@
+---
+openio_account_workers: 1
+openio_oioswift_workers: 1
+openio_ecd_wsgi_processes: 1
+namespace_meta1_digits: "1"
+openio_event_agent_workers: 1
+openio_zookeeper_parallel_gc_threads: 1
+openio_zookeeper_memory: "256M"
+openio_minimal_score_for_volume_admin_bootstrap: 5
+openio_minimal_score_for_directory_bootstrap: 5
+
+openio_checks_filter:
+  apparmor: false
+  zookeeper_memory: true
+  reachability: false
+
+openio_environment: {}
+
+openio_no_log: false
+...
