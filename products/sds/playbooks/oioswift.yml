@@ -1,12 +1,30 @@
 ---
-- name: Install and configure OpenIO Swift
+- name: OpenIO Swift - Install and configure OpenIO Swift
   any_errors_fatal: true
   hosts: oioswift
   become: true
-  gather_facts: true
   environment: "{{ openio_environment }}"
 
   pre_tasks:
+    - name: Gathering network facts
+      setup:
+        gather_subset: network
+
+    - name: Gathering hardware facts
+      setup:
+        gather_subset: hardware
+        filter: "{{ item }}"
+      with_items:
+        - ansible_processor_vcpus
+
+    - name: Gathering needed facts
+      setup:
+        gather_subset: min
+        filter: "{{ item }}"
+      with_items:
+        - ansible_distribution
+        - ansible_os_family
+
     - name: set openio_bind_address as fact
       set_fact:
         openio_bind_address: "{{ openio_bind_address }}"

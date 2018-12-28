@@ -1,14 +1,10 @@
 ---
-# check des nom de machines (tous differents)
-- name: Check inventory
+- name: Preflight - Check inventory
   hosts: localhost
   any_errors_fatal: true
   max_fail_percentage: 0
-  gather_facts: false
-  environment: "{{ openio_environment }}"
 
   tasks:
-
     - name: Ansible version is unsupported
       assert:
         that:
@@ -62,13 +58,12 @@
           - _test_metadata is not string
       check_mode: false
 
-- name: Check hosts
+- name: Preflight - Check hosts
   hosts: openio
+  strategy: linear
   any_errors_fatal: true
   max_fail_percentage: 0
-  gather_facts: false
   become: true
-  environment: "{{ openio_environment }}"
 
   tasks:
     - name: SDS release not match
@@ -93,6 +88,31 @@
       raw: "test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)"
       changed_when: false
 
+    - name: Gathering network facts
+      setup:
+        gather_subset: network
+
+    - name: Gathering hardware facts
+      setup:
+        gather_subset: hardware
+        filter: "{{ item }}"
+      with_items:
+        - ansible_memtotal_mb
+
+    - name: Gathering needed facts
+      setup:
+        gather_subset: min
+        filter: "{{ item }}"
+      with_items:
+        - ansible_hostname
+        - ansible_service_mgr
+        - ansible_distribution
+        - ansible_selinux
+        - ansible_os_family
+        - ansible_apparmor
+        - ansible_kernel
+        - ansible_env
+
     - name: Reaching {{ openio_mirror }}
       uri:
         url: "http://{{ openio_mirror }}/pub/repo/openio/sds/{{ openio_sds_release }}/"
@@ -100,6 +120,7 @@
       changed_when: false
       failed_when: false
       check_mode: false
+      environment: "{{ openio_environment }}"
 
     - name: OpenIO repository is not reachable
       assert:
@@ -108,10 +129,7 @@
       ignore_errors: "{{ openio_ignore_assert_errors }}"
       check_mode: false
 
-    - name: Gathering facts
-      setup: {}
-
-    - name: Hostnames in the group openio have to be unique
+    - name: hostname in openio group are unique
       assert:
         that: >
           groups['openio'] | map('extract', hostvars, ['ansible_hostname']) | list | count
@@ -119,6 +137,22 @@
           groups['openio'] | map('extract', hostvars, ['ansible_hostname']) | list | unique | count
       delegate_to: localhost
       run_once: true
+
+    - name: 'Gather /etc/passwd entries'
+      getent:
+        database: passwd
+
+    - name: Stop if UID is already used for an account which is not 'openio'
+      assert:
+        that: (item.key == 'openio' and (item.value[1] | int) == openio_user_openio_uid) or (item.key != 'openio' and (item.value[1] | int) != openio_user_openio_uid)
+      with_dict: '{{ getent_passwd }}'
+      ignore_errors: "{{ openio_ignore_assert_errors }}"
+
+    - name: Stop if GID is already used for an account which is not 'openio'
+      assert:
+        that: (item.key == 'openio' and (item.value[2] | int) == openio_group_openio_gid) or (item.key != 'openio' and (item.value[2] | int) != openio_group_openio_gid)
+      with_dict: '{{ getent_passwd }}'
+      ignore_errors: "{{ openio_ignore_assert_errors }}"
 
     - name: Get running process
       command: "/bin/ps auxww"
@@ -182,6 +216,7 @@
 
         - name: Check new AppArmor status
           setup:
+            gather_subset: min
             filter: "ansible_apparmor"
           when: _disable_apparmor.changed
 
@@ -238,4 +273,15 @@
         content: "{{ ansible_distribution | lower }}"
       when:
         - ansible_os_family == 'RedHat'
+
+    - name: Test reachability
+      wait_for:
+        host: "{{ item }}"
+        port: "{{ ansible_port }}"
+        timeout: 10
+        delay: 0
+      with_items: "{{ groups['openio'] \
+        | map('extract', hostvars, ['openio_bind_address']) \
+        | list }}"
+      when: openio_checks_filter['reachability']
 ...

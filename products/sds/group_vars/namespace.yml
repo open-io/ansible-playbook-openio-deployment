@@ -10,5 +10,4 @@ openio_namespace_meta1_digits: "{{ namespace_meta1_digits }}"
 
 openio_namespace_storage_policy: "{{ namespace_storage_policy }}"
 openio_namespace_chunk_size_megabytes: "{{ namespace_chunk_size_megabytes | int }}"
-
 ...
