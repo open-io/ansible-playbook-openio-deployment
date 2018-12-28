@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 cache_dir="`dirname $0`/.cache"
  if [ -d $cache_dir ]; then
