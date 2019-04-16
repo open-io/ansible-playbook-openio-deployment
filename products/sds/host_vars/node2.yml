@@ -1,6 +1,0 @@
----
-openio_data_mounts:
-  - { partition: '/dev/sdb', mountpoint: "/var/lib/oio/sds" }
-openio_metadata_mounts:
-  - { partition: '/dev/sdb', mountpoint: "/var/lib/oio/sds" }
-...

@@ -3,7 +3,9 @@
   hosts: openio
   become: true
   any_errors_fatal: true
-  environment: "{{ openio_environment }}"
+  environment: "{{ default_openio_environment }}"
+  vars_files:
+    - ../vars/sds.yml
 
   pre_tasks:
     - name: Gathering needed facts
@@ -23,7 +25,7 @@
     - role: users
       openio_users_add:
         - username: openio
-          uid: "{{ openio_user_openio_uid }}"
+          uid: "{{ default_openio_user_openio_uid }}"
           name: openio account
           group: openio
           groups: []
@@ -31,18 +33,40 @@
           shell: /bin/bash
       openio_users_groups:
         - groupname: openio
-          gid: "{{ openio_group_openio_gid }}"
+          gid: "{{ default_openio_group_openio_gid }}"
 
     - role: repositories
-      openio_repository_openstack_release: "{{ openio_openstack_distro }}"
-      openio_repository_mirror_host: "{{ openio_mirror }}"
-      openio_repository_no_log: "{{ openio_no_log }}"
+      openio_repository_openstack_release: "{{ default_openio_openstack_distro }}"
+      openio_repository_mirror_host: "{{ default_openio_mirror }}"
+      openio_repository_no_log: "{{ default_openio_no_log }}"
       openio_repository_products:
         sds:
-          release: "{{ openio_sds_release | default(hostvars[groups['openio'][0]]['openio_sds_release']) }}"
+          release: "{{ openio_sds_release | d(default_openio_sds_release) }}"
+
+    - role: repositories
+      openio_repository_mirror_host: "{{ default_openio_mirror }}"
+      openio_repository_manage_openstack_repository: false
+      openio_repository_no_log: "{{ default_openio_no_log }}"
+      openio_repository_products:
+        replicator:
+          release: "{{ openio_sds_release | d(default_openio_sds_release) }}"
+          user: "{{ openio_repositories_credentials.replicator.user }}"
+          password: "{{ openio_repositories_credentials.replicator.password }}"
+      when:
+        - groups.replicator is defined
+        - groups.replicator | length >= 1  | default(false)
+
+    - role: repositories
+      openio_repository_mirror_host: "{{ default_openio_mirror }}"
+      openio_repository_openstack_release: "{{ default_openio_openstack_distro }}"
+      openio_repository_no_log: "{{ default_openio_no_log }}"
+      openio_repository_products:
+        sds:
+          release: "unstable"
+      when: openio_unstable_repo | default(default_openio_unstable_repo)
 
     - role: ntp
-      when: ntp_enabled
+      when: default_ntp_enabled
 
     - role: gridinit
       openio_gridinit_conf_location: "/etc/gridinit.d/{*,*/*}"

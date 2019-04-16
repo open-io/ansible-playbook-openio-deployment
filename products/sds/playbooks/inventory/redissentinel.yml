@@ -1,15 +1,15 @@
 ---
 - name: Generate redissentinel inventory
   set_fact:
-    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'services': new_item } } }, recursive=true) }}"
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace | d(default_namespace): { 'services': new_item } } }, recursive=true) }}"
   vars:
     new_item:
       redissentinel:
-        - id: "{{ namespace }}-redissentinel-{{ openio_redis_serviceid }}"
+        - id: "{{ namespace | d(default_namespace) }}-redissentinel-{{ openio_redis_serviceid }}"
           ip: "{{ openio_redis_bind_address }}"
-          port: "{{ openio_redis_sentinel_bind_port }}"
+          port: "{{ openio_redis_sentinel_bind_port | d(default_openio_redis_sentinel_bind_port) }}"
           partition: ""
-          volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/redissentinel-{{ openio_redis_serviceid }}"
+          volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace | d(default_namespace) }}/redissentinel-{{ openio_redis_serviceid }}"
           location: ""
           config: {}
   when:

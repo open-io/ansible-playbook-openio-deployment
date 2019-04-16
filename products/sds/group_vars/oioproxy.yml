@@ -1,3 +1,0 @@
----
-openio_oioproxy_bind_address: "{{ openio_bind_address }}"
-...

@@ -1,0 +1,3 @@
+---
+default_oiofs_global_redis_inventory_groupname: "{{ oiofs_global_redis_inventory_groupname | d('redis') }}"
+...

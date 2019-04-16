@@ -1,7 +1,9 @@
 ---
 - name: Checks
   import_playbook: playbooks/checks.yml
-  tags: checks
+  tags:
+    - checks
+    - check
 
 - name: Install base
   import_playbook: playbooks/install_basic_needs.yml
@@ -13,11 +15,16 @@
 
 - name: Swift
   import_playbook: playbooks/oioswift.yml
-  tags: swift
+  tags:
+    - swift
+    - oioswift
+    - s3
 
 - name: Post install
   import_playbook: playbooks/postinstall.yml
-  tags: post
+  tags:
+    - post
+    - postinstall
 
 - name: Inventory
   import_playbook: playbooks/inventory.yml

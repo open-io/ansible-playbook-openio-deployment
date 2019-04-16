@@ -1,15 +1,15 @@
 ---
 - name: Generate zookeeper inventory
   set_fact:
-    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'services': new_item } } }, recursive=true) }}"
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace | d(default_namespace): { 'services': new_item } } }, recursive=true) }}"
   vars:
     new_item:
       zookeeper:
-        - id: "{{ namespace }}-zookeeper-{{ openio_zookeeper_serviceid }}"
+        - id: "{{ namespace | d(default_namespace) }}-zookeeper-{{ openio_zookeeper_serviceid }}"
           ip: "{{ openio_zookeeper_bind_address }}"
           port: "{{ openio_zookeeper_bind_port  }}"
           partition: ""
-          volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/zookeeper-{{ openio_zookeeper_serviceid }}"
+          volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace | d(default_namespace) }}/zookeeper-{{ openio_zookeeper_serviceid }}"
           location: ""
           config: {}
   when:

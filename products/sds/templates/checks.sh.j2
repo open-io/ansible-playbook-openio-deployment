@@ -3,6 +3,8 @@
 YELLOW="\e[33m"
 NC="\e[39m"
 
+trap 'exit 1' INT
+{% if openio_environment is defined %}
 # Environment variables
 {% for key in openio_environment.keys() %}
 export {{ key }}={{ openio_environment[key] }}
@@ -11,9 +13,10 @@ export {{ key }}={{ openio_environment[key] }}
 export NO_PROXY={{ vip }}
 {% endif %}
 # End environment variables
+{% endif %}
 
 echo '## OPENIO'
-. /etc/profile.d/openio.sh
+export OIO_NS={{ namespace }}
 
 echo -e $YELLOW Status of services. $NC
 gridinit_cmd status -c
@@ -23,7 +26,7 @@ echo -e $YELLOW Display the cluster status. $NC
 openio cluster list
 echo --
 
-echo -e $YELLOW Upload the /etc/passwd  file to the bucket MY_CONTAINER of the project MY_ACCOUNT. $NC
+echo -e $YELLOW Upload the /etc/passwd file to the bucket MY_CONTAINER of the project MY_ACCOUNT. $NC
 openio object create MY_CONTAINER /etc/passwd --oio-account MY_ACCOUNT
 echo --
 

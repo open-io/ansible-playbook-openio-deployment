@@ -1,0 +1,201 @@
+---
+all:
+  hosts:
+    node1:
+      ansible_host: IP_ADDRESS_OF_NODE1
+      openio_data_mounts:
+        - mountpoint: /mnt/data1
+          partition: /dev/vdb
+        - mountpoint: /mnt/data2
+          partition: /dev/vdc
+      openio_metadata_mounts:
+        - mountpoint: /mnt/metadata1
+          partition: /dev/vdd
+          meta2_count: 2
+    node2:
+      ansible_host: IP_ADDRESS_OF_NODE2
+      openio_data_mounts:
+        - mountpoint: /mnt/data1
+          partition: /dev/vdb
+        - mountpoint: /mnt/data2
+          partition: /dev/vdc
+      openio_metadata_mounts:
+        - mountpoint: /mnt/metadata1
+          partition: /dev/vdd
+          meta2_count: 2
+    node3:
+      openio_bind_address: '172.17.0.33'
+      ansible_host: IP_ADDRESS_OF_NODE3
+      openio_data_mounts:
+        - mountpoint: /mnt/data1
+          partition: /dev/vdb
+        - mountpoint: /mnt/data2
+          partition: /dev/vdc
+      openio_metadata_mounts:
+        - mountpoint: /mnt/metadata1
+          partition: /dev/vdd
+          meta2_count: 2
+  vars:
+    ansible_user: root
+    #ansible_user: ubuntu
+    #ansible_user: centos
+    # CI only
+    ansible_connection: docker
+    openio_checks_filter:
+      reachability: false
+      mountpoint: false
+    openio_bootstrap: true
+    openio_maintenance_mode: false
+    openio_no_log: false
+    openio_mirror: mirror2.openio.io
+
+  children:
+    openio:
+      children:
+        fronts: {}
+        backs: {}
+
+      vars:
+        namespace: OPENIO
+        namespace_storage_policy: "THREECOPIES"
+
+        openio_bind_interface: '{{ ansible_default_ipv4.alias }}'
+        openio_bind_address: '{{ ansible_default_ipv4.address }}'
+
+        openio_oioswift_users:
+          - name: "demo:demo"
+            password: "DEMO_PASS"
+            roles:
+              - admin
+
+        #openio_conscience_multiple_enable: true
+        #openio_conscience_services_common_timeout: 30
+
+        ########
+        # Special needs
+        # ---- Low memory nodes (ARM, docker, ...)
+        openio_account_workers: 1
+        openio_oioswift_workers: 1
+        namespace_meta1_digits: "1"
+        openio_event_agent_workers: 1
+        openio_zookeeper_parallel_gc_threads: 1
+        openio_zookeeper_memory: "256M"
+        openio_minimal_score_for_volume_admin_bootstrap: 5
+        openio_minimal_score_for_directory_bootstrap: 5
+        # ---- End Low memory nodes
+
+    # what is not used for storage
+    fronts:
+      hosts: {}
+
+    # what is used for storage
+    backs:
+      hosts:
+        node1: {}
+        node2: {}
+        node3: {}
+
+### SDS
+    account:
+      children:
+        backs: {}
+
+    beanstalkd:
+      children:
+        backs: {}
+
+    conscience:
+      hosts:
+        #node1: {}
+        #node2: {}
+        node3: {}
+
+    conscience-agent:
+      children:
+        backs: {}
+
+    ecd:
+      children:
+        backs: {}
+
+    meta:
+      children:
+        meta0: {}
+        meta1: {}
+        meta2: {}
+
+    meta0:
+      hosts:
+        node1: {}
+        node2: {}
+        node3: {}
+
+    meta1:
+      hosts:
+        node1: {}
+        node2: {}
+        node3: {}
+
+    meta2:
+      hosts:
+        node1: {}
+        node2: {}
+        node3: {}
+
+    namespace:
+      children:
+        openio: {}
+      vars:
+        openio_namespace_conscience_url: "{{ hostvars[groups['conscience'][0]]['openio_bind_address'] }}:6000"
+
+    oio-blob-indexer:
+      children:
+        backs: {}
+
+    oio-blob-rebuilder:
+      children:
+        backs: {}
+
+    oio-event-agent:
+      children:
+        backs: {}
+
+    oioproxy:
+      children:
+        openio: {}
+
+    oioswift:
+      children:
+        backs: {}
+      vars:
+        openio_oioswift_pipeline: "{{ pipeline_tempauth }}"
+        openio_oioswift_filter_tempauth:
+          "{{ {'use': 'egg:oioswift#tempauth'} | combine(openio_oioswift_users | dict_to_tempauth) }}"
+    rawx:
+      children:
+        backs: {}
+
+    rdir:
+      children:
+        backs: {}
+
+    redis:
+      hosts:
+        node1: {}
+        node2: {}
+        node3: {}
+
+    zookeeper:
+      hosts:
+        node1: {}
+        node2: {}
+        node3: {}
+
+### OIOFS
+    oiofs:
+      hosts: {}
+      vars: {}
+
+    oiofs_redis:
+      hosts: {}
+...
