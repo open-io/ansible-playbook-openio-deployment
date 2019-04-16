@@ -3,7 +3,9 @@
   hosts: oioswift
   become: true
   any_errors_fatal: true
-  environment: "{{ openio_environment }}"
+  environment: "{{ default_openio_environment }}"
+  vars_files:
+    - ../vars/sds.yml
 
   pre_tasks:
     - name: Gathering network facts
@@ -20,17 +22,27 @@
 
     - name: set openio_bind_address as fact
       set_fact:
-        openio_bind_address: "{{ openio_bind_address }}"
+        openio_bind_address: "{{ openio_bind_address | d(default_openio_bind_address) }}"
 
   tasks:
     - name: Install AWS client
       package:
         name: awscli
+      # The installation of awscli is a comfort, it is not necessary
+      ignore_errors: true
+      register: install_awscli
+      until: install_awscli is success
+      retries: 5
+      delay: 2
 
     - name: Install OpenStack client
       package:
         name: python-openstackclient
       ignore_errors: "{{ ansible_check_mode }}"
+      register: install_oscli
+      until: install_oscli is success
+      retries: 5
+      delay: 2
 
     - name: Get AWS credentials (Keystone)
       block:
@@ -43,13 +55,16 @@
             OS_USER_DOMAIN_NAME: Default
             OS_PROJECT_NAME: demo
             OS_USERNAME: demo
-            OS_PASSWORD: "{{ openio_keystone_demo_password }}"
-            OS_AUTH_URL: "http://{{ openio_bind_virtual_address }}:35357"
+            OS_PASSWORD: "{{ openio_keystone_demo_password | d('DEMO_PASS') }}"
+            OS_AUTH_URL: "http://{{ openio_bind_virtual_address }}:5000"
             OS_IDENTITY_API_VERSION: 3
             OS_IMAGE_API_VERSION: 2
+          until: cred is success
+          retries: 5
+          delay: 2
 
         - name: Register AWS creds
-          no_log: "{{ openio_no_log }}"
+          no_log: "{{ default_openio_no_log }}"
           ignore_errors: true
           register: aws_cred
           set_fact:
@@ -62,22 +77,23 @@
             secret: "{{ ( cred.stdout | from_json )['secret'] }}"
           when: aws_cred | failed
       when:
+        - groups.keystone is defined
         - "'keystone' in groups"
-        - groups['keystone'] | length > 0
+        - groups.keystone | length > 0
       ignore_errors: "{{ ansible_check_mode }}"
 
     - name: Get AWS credentials (Tempauth)
       block:
         - name: Get user
-          no_log: "{{ openio_no_log }}"
+          no_log: "{{ default_openio_no_log }}"
           set_fact:
             openio_oioswift_tempauth_user: "{{ openio_oioswift_filter_tempauth.keys() | select('match', 'user_.*') | list | first }}"
         - name: Get password of user
-          no_log: "{{ openio_no_log }}"
+          no_log: "{{ default_openio_no_log }}"
           set_fact:
             openio_oioswift_tempauth_pass: "{{ openio_oioswift_filter_tempauth[openio_oioswift_tempauth_user].split(' ')[0] }}"
         - name: register AWS creds (Tempauth)
-          no_log: "{{ openio_no_log }}"
+          no_log: "{{ default_openio_no_log }}"
           register: aws_cred
           set_fact:
             access: "{{ openio_oioswift_tempauth_user.split('_')[1:] | join(':') }}"
@@ -96,7 +112,7 @@
         mode: 0750
 
     - name: Set aws credentials
-      no_log: "{{ openio_no_log }}"
+      no_log: "{{ default_openio_no_log }}"
       copy:
         dest: /root/.aws/credentials
         content: |
@@ -119,16 +135,10 @@
                max_queue_size = 100
                #multipart_threshold = 50MB
                #multipart_chunksize = 10MB
-            region = {{ openio_s3_region }}
-
+            region = {{ openio_s3_region | d(default_openio_s3_region) }}
         - path: /etc/profile.d/openio.sh
           content: |
-            export OIO_NS={{ namespace }}
-            export OS_PROJECT_DOMAIN_NAME=Default
-            export OS_USER_DOMAIN_NAME=Default
-            export OS_PROJECT_NAME=demo
-            export OS_IDENTITY_API_VERSION=3
-            export OS_IMAGE_API_VERSION=2
+            export OIO_NS={{ namespace | d(default_namespace) }}
       ignore_errors: "{{ ansible_check_mode }}"
 
     - name: Add script for tests in /root/checks.sh

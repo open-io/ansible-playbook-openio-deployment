@@ -1,0 +1,86 @@
+---
+default_openio_user_openio_uid: "{{ openio_user_openio_uid | d(120) }}"
+default_openio_group_openio_gid: "{{ openio_group_openio_gid | d(220) }}"
+default_openio_sds_release: "19.04"
+default_namespace: OPENIO
+default_namespace_meta1_digits: 2
+default_namespace_chunk_size_megabytes: 100
+default_openio_replicas: 3
+default_namespace_storage_policy: "THREECOPIES"
+
+default_openio_s3_region: "us-east-1"
+
+default_openio_location_server: "{{ ansible_hostname }}."
+
+default_openio_bind_interface: "{{ ansible_default_ipv4.alias }}"
+default_openio_bind_address: "{{ ansible_default_ipv4.address }}"
+
+default_openio_unstable_repo: false
+default_openio_sds_version: latest
+default_openio_swift_version: latest
+default_openio_swift_swift3_version: latest
+
+#default_openio_monitoring: false
+#default_openio_billing: false
+#default_openio_grid: false
+#default_openio_elk: false
+
+default_openio_maintenance_mode: true
+
+default_openio_sysctl_managed: true
+default_openio_sysctl_entries:
+  net.ipv4.ip_local_port_range: 8192 65535
+  net.ipv4.tcp_fastopen: 1
+  net.ipv4.tcp_mtu_probing: 1
+  net.ipv4.tcp_rfc1337: 1
+  net.ipv4.tcp_sack: 1
+  net.ipv4.tcp_syncookies: 0
+  net.ipv4.tcp_timestamps: 1
+  net.ipv4.tcp_tw_reuse: 1
+  net.ipv4.tcp_window_scaling: 1
+  kernel.pid_max: 196608
+
+default_openio_distribution_supported:
+  - 'RedHat'
+  - 'CentOS'
+  - 'Fedora'
+  - 'Ubuntu'
+  #- 'Raspbian'
+
+default_openio_release_supported:
+  - '18.04'
+  - '18.10'
+  - '19.04'
+
+default_openio_checks_filter:
+  apparmor: "{{ false if openio_checks_filter is not defined else openio_checks_filter.apparmor | d(false) }}"
+  zookeeper_memory: "{{ true if openio_checks_filter is not defined else openio_checks_filter.zookeeper_memory | d(true) }}"
+  reachability: "{{ true if openio_checks_filter is not defined else openio_checks_filter.reachability | d(true) }}"
+  mountpoint: "{{ true if openio_checks_filter is not defined else openio_checks_filter.mountpoint | d(true) }}"
+
+default_openio_ignore_assert_errors: "{{ openio_ignore_assert_errors | d(false) }}"
+
+default_ansible_port: "{{ ansible_port | d(22) }}"
+
+default_openio_limits_openfiles_min: "{{ openio_limits_openfiles_min | d(1024) }}"
+
+default_openio_manage_os_requirement: "{{ openio_manage_os_requirement | d(true) }}"
+
+default_openio_environment: "{{ openio_environment | d({}) }}"
+
+default_openio_mirror: "{{ openio_mirror | d('mirror.openio.io') }}"
+
+default_openio_openstack_distro: "{{ openio_openstack_distro | d('queens') }}"
+
+default_openio_no_log: "{{ openio_no_log | d(true) }}"
+
+default_ntp_enabled: "{{ ntp_enabled | d(true) }}"
+
+default_openio_redis_server_bind_port: 6011
+default_openio_redis_sentinel_bind_port: 6012
+default_openio_rdir_global_bind_port: 6300
+default_openio_rawx_global_bind_port: 6200
+default_openio_meta0_global_bind_port: 6001
+default_openio_meta1_global_bind_port: 6110
+default_openio_meta2_global_bind_port: 6120
+...

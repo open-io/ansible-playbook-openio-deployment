@@ -5,7 +5,7 @@ sudo: required
 env:
   global:
     - ANSIBLE_VERSION=2.5
-    - SDS_RELEASE=18.10
+    - SDS_RELEASE=19.04
   matrix:
     - DISTRIBUTION: centos
       VERSION: 7
@@ -26,11 +26,11 @@ before_install:
   - sudo apt-get update
   - sudo apt-get install --only-upgrade git
   # Allow fetching other branches than master
-  - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
+  #- git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
   # Fetch the branch with test code
-  - git fetch origin docker-tests
+  #- git fetch origin docker-tests
   - cd products/sds
-  - git worktree add docker-tests origin/docker-tests
+  #- git worktree add docker-tests origin/docker-tests
   # retrieve centralized script
   - |
     for i in docker-tests.sh functional-tests.sh ansible.cfg; do
@@ -38,28 +38,31 @@ before_install:
     done
   # Lint
   - sudo pip install --upgrade pip
-  - sudo pip install ansible yamllint
+  - sudo pip install 'ansible<2.8' yamllint
   # netaddr
   - sudo pip install netaddr
 
   - ./docker-tests/docker-tests.sh && export TRINODE_ID1=$(docker ps -qa | head -n 1)
   - ./docker-tests/docker-tests.sh && export TRINODE_ID2=$(docker ps -qa | head -n 1)
   - ./docker-tests/docker-tests.sh && export TRINODE_ID3=$(docker ps -qa | head -n 1)
+
+  - cp docker-tests/inventory.yml inventory.yml
   - |
     for i in $(seq 1 3); do 
       count="TRINODE_ID$i"
-      sed -i -e "/node$i ansible_host/ s@node$i .*@node$i ansible_host=${!count} ansible_user=root ansible_connection=docker@" inventory.ini
+      sed -i -e "s/IP_ADDRESS_OF_NODE$i/${!count}/" inventory.yml
     done
-
 script:
   # Lint
   - yamllint .
 
   # use-case: add second IP on eth0
   - docker exec -ti $TRINODE_ID3 ip addr add 172.17.0.33/16 dev eth0
-  - |
-    sed -i -e '$i openio_bind_address: 172.17.0.33' host_vars/node3.yml
-  -  docker exec -ti $TRINODE_ID3 ip addr show
+  - docker exec -ti $TRINODE_ID3 ip addr show
+
+  - docker exec -ti $TRINODE_ID1 ip --brief addr | grep -v -E '^lo'
+  - docker exec -ti $TRINODE_ID2 ip --brief addr | grep -v -E '^lo'
+  - docker exec -ti $TRINODE_ID3 ip --brief addr | grep -v -E '^lo'
 
   # Download roles
   - ./requirements_install.sh
@@ -68,15 +71,20 @@ script:
   - ansible --version
 
   # syntax check
-  - ansible-playbook -i inventory.ini main.yml -e "openio_bootstrap=true" -e "@docker-tests/extra_sds_${SDS_RELEASE}.yml" --syntax-check
+  - ansible-playbook -i inventory.yml main.yml --syntax-check
 
   # run
-  - ansible-playbook -i inventory.ini main.yml -e "openio_bootstrap=true" -e "@docker-tests/extra_sds_${SDS_RELEASE}.yml" --diff
+  - ./deploy_and_bootstrap.sh
 
   # Run functional tests on the container
   - |
-    for i in 3 4 33; do 
-      echo 172.17.0.$i
+    for i in 2 3 33; do 
+      echo '----------' 172.17.0.$i '----------'
       SUT_IP=172.17.0.$i ./docker-tests/functional-tests.sh
     done
+
+  # loss of 1 server
+  #- docker stop $TRINODE_ID1
+  #- sleep 60
+  #- SUT_IP=172.17.0.33 ./docker-tests/functional-tests.sh
 ...

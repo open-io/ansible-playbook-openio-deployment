@@ -1,1 +1,0 @@
-../sds/spawn_my_lab.sh

@@ -2,6 +2,7 @@
 ignore: |
   roles/
   .travis.yml
+  venv/
 rules:
   braces:
     level: error

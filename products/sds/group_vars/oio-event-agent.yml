@@ -1,5 +1,0 @@
----
-openio_event_agent_queue_url: "beanstalk://{{ openio_bind_address }}:6014"
-
-openio_event_agent_location: "{{ openio_location_room | default ('') }}{{ openio_location_rack | default ('') }}{{ openio_location_server | default ('') }}{{ openio_event_agent_serviceid }}"
-...

@@ -3,7 +3,9 @@
   any_errors_fatal: true
   hosts: oioswift
   become: true
-  environment: "{{ openio_environment }}"
+  environment: "{{ default_openio_environment }}"
+  vars_files:
+    - ../vars/sds.yml
 
   pre_tasks:
     - name: Gathering network facts
@@ -27,16 +29,19 @@
 
     - name: set openio_bind_address as fact
       set_fact:
-        openio_bind_address: "{{ openio_bind_address }}"
+        openio_bind_address: "{{ openio_bind_address | d(default_openio_bind_address) }}"
 
   roles:
     - role: memcached
-      openio_memcached_namespace: "{{ namespace }}"
+      openio_memcached_namespace: "{{ namespace | d(default_namespace) }}"
       openio_memcached_gridinit_dir: "/etc/gridinit.d/"
-      openio_memcached_gridinit_file_prefix: "{{ namespace }}-"
+      openio_memcached_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
 
     - role: oioswift
-      openio_oioswift_namespace: "{{ namespace }}"
+      openio_oioswift_namespace: "{{ namespace | d(default_namespace) }}"
+      openio_oioswift_version: "{{ openio_swift_version | d(default_openio_sds_version) }}"
+      openio_oioswift_swift3_version: "{{ openio_swift_swift3_version | d(default_openio_swift_swift3_version) }}"
+      openio_oioswift_sds_version: "{{ openio_sds_version | d(default_openio_sds_version) }}"
       openio_oioswift_gridinit_dir: "/etc/gridinit.d/"
-      openio_oioswift_gridinit_file_prefix: "{{ namespace }}-"
+      openio_oioswift_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
 ...

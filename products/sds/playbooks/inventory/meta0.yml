@@ -1,15 +1,15 @@
 ---
 - name: Generate meta0 inventory
   set_fact:
-    inventory: "{{ inventory | combine({ 'namespaces': { namespace: { 'services': new_item } } }, recursive=true) }}"
+    inventory: "{{ inventory | combine({ 'namespaces': { namespace | d(default_namespace): { 'services': new_item } } }, recursive=true) }}"
   vars:
     new_item:
       meta0:
-        - id: "{{ namespace }}-meta0-{{ openio_meta_serviceid }}"
+        - id: "{{ namespace | d(default_namespace) }}-meta0-{{ openio_meta_serviceid }}"
           ip: "{{ openio_bind_address }}"
-          port: "{{ openio_meta0_global_bind_port }}"
+          port: "{{ default_openio_meta0_global_bind_port | d(openio_meta0_global_bind_port) }}"
           partition: "{{ openio_metadata_mounts[0]['partition'] }}"
-          volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace }}/meta0-{{ openio_meta_serviceid }}"
+          volume: "{{ openio_metadata_mounts[0]['mountpoint'] }}/{{ namespace | d(default_namespace) }}/meta0-{{ openio_meta_serviceid }}"
           location: "{{ openio_meta_location }}"
           config: {}
   when:

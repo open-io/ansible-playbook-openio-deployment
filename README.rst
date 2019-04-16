@@ -14,6 +14,7 @@ Operating system
 
 -  Centos 7
 -  Ubuntu 16.04 (Server)
+-  Ubuntu 18.04 (Server)
 
 System
 ------
@@ -112,4 +113,4 @@ You only need to do this setup on the node that will install the others.
     sudo apt install git python-netaddr -y
 
 
-Now you can install `OpenIO SDS <https://github.com/open-io/ansible-playbook-openio-deployment/tree/master/products/sds>`__
+Now you can install `OpenIO SDS <https://github.com/open-io/ansible-playbook-openio-deployment/tree/19.04/products/sds>`__

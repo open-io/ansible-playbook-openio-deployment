@@ -22,14 +22,14 @@
   set_fact:
     inventory: >-
       {% set _hash = {'id': openio_meta_id, 'ip': openio_bind_address, 'port': openio_meta_bind_port | int, 'volume': openio_meta_volume, 'partition': meta.partition, 'location': openio_meta_location, 'config': openio_meta_config} -%}
-      {% set _array = inventory.namespaces[namespace].services.meta2 | default([]) | union([_hash]) -%}
-      {{ inventory | combine({ 'namespaces': { namespace: { 'services': { 'meta2': _array } } } }, recursive=true) }}
+      {% set _array = inventory.namespaces[namespace | d(default_namespace)].services.meta2 | default([]) | union([_hash]) -%}
+      {{ inventory | combine({ 'namespaces': { namespace | d(default_namespace): { 'services': { 'meta2': _array } } } }, recursive=true) }}
   vars:
     openio_meta_serviceid: "{{ meta.id }}"
-    openio_meta_id: "{{ namespace }}-meta2-{{ openio_meta_serviceid }}"
+    openio_meta_id: "{{ namespace | d(default_namespace) }}-meta2-{{ openio_meta_serviceid }}"
     openio_meta_config: {}
-    openio_meta_bind_port: "{{ openio_meta2_global_bind_port + meta.id  }}"
-    openio_meta_volume: "{{ meta.mountpoint }}/{{ namespace }}/meta2-{{ openio_meta_serviceid }}"
+    openio_meta_bind_port: "{{ default_openio_meta2_global_bind_port | d(openio_meta2_global_bind_port) + meta.id  }}"
+    openio_meta_volume: "{{ meta.mountpoint }}/{{ namespace | d(default_namespace) }}/meta2-{{ openio_meta_serviceid }}"
   with_items: "{{ meta2 }}"
   loop_control:
     loop_var: meta

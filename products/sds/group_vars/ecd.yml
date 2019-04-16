@@ -1,3 +1,0 @@
----
-openio_ecd_bind_address: "{{ openio_bind_address }}"
-...

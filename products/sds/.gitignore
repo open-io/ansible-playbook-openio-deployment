@@ -9,4 +9,3 @@ venv/*
 #host_vars/*
 #inventory.ini
 .cache
-*tests

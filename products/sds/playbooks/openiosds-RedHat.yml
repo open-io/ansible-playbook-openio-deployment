@@ -12,4 +12,23 @@
   loop_control:
     loop_var: pkg
   ignore_errors: "{{ ansible_check_mode }}"
+  register: install_pkg
+  until: install_pkg is success
+  retries: 5
+  delay: 2
+
+- name: Set rsyslog configuration
+  copy:
+    src: "{{ playbook_dir }}/../files/rsyslog_RedHat_openio-sds.conf"
+    dest: "/etc/rsyslog.d/openio-sds.conf"
+    owner: root
+    group: root
+    mode: 0644
+  register: _rsyslog_openio
+
+- name: Reload rsyslog
+  systemd:
+    name: rsyslog
+    state: restarted
+  when: _rsyslog_openio is changed
 ...

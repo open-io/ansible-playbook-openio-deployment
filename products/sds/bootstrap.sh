@@ -6,4 +6,4 @@ cache_dir="`dirname $0`/.cache"
     rm -rf $cache_dir
  fi
 
-ansible-playbook -i inventory.ini main.yml -e "openio_bootstrap=true" -t bootstrap
+ansible-playbook -i inventory.yml main.yml -e "openio_bootstrap=true" -e "openio_maintenance_mode=false" -t bootstrap

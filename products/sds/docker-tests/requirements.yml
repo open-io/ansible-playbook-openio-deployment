@@ -1,0 +1,5 @@
+---
+- src: https://github.com/open-io/ansible-role-openio-users.git
+  version: "19.04"
+  name: users
+...

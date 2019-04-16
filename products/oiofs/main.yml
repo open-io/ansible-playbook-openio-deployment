@@ -1,5 +1,0 @@
----
-- name: Install oiofs
-  import_playbook: playbooks/oiofs.yml
-  tags: oiofs
-...

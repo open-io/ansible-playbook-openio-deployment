@@ -7,7 +7,7 @@ cache_dir="`dirname $0`/.cache"
  fi
 
 if [[ $# -eq 1 ]]; then
-  ansible-playbook -i inventory.ini main.yml -e "openio_bootstrap=true" -t $1
+  ansible-playbook -i inventory.yml main.yml -e "openio_bootstrap=true" -e "openio_maintenance_mode=false" -t $1
 else
-  ansible-playbook -i inventory.ini main.yml -e "openio_bootstrap=true"
+  ansible-playbook -i inventory.yml main.yml -e "openio_bootstrap=true" -e "openio_maintenance_mode=false"
 fi

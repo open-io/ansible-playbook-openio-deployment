@@ -1,8 +1,10 @@
 ---
 - name: POSTINSTALL - Generate inventory files
-  hosts: fronts:backs
+  hosts: openio
   become: true
   any_errors_fatal: true
+  vars_files:
+    - ../vars/sds.yml
   vars:
     inventory:
       namespaces: {}
@@ -76,19 +78,18 @@
     - include: inventory/conscienceagent.yml
     - include: inventory/conscience.yml
     - include: inventory/oioproxy.yml
-    - include: inventory/memcached.yml
     - include: inventory/oioswift.yml
     - include: inventory/ecd.yml
 
     - name: Test directory namespace presence
       stat:
-        path: "/etc/oio/sds/{{ namespace }}"
+        path: "/etc/oio/sds/{{ namespace | d(default_namespace) }}"
       register: _namespace_dir
 
     - name: Generate inventory
       copy:
         content: "---\n{{ inventory | to_nice_yaml }}\n...\n"
-        dest: /etc/oio/sds/{{ namespace }}/inventory.yml
+        dest: /etc/oio/sds/{{ namespace | d(default_namespace) }}/inventory.yml
         owner: openio
         group: openio
         mode: 0640
