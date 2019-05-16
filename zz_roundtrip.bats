@@ -5,9 +5,8 @@ get_ID_node() {
   #for i in $(docker ps -aq); do
   #  export SUT_ID=$(docker inspect $i| grep -B400 ${SUT_IP}|grep Hostname\" | uniq| sed -e 's@.*"\(.*\)",@\1@')
   #done
-  if [[ "$SUT_IP" == "172.17.0.2" ]]; then export SUT_ID=${STANDALONE_ID}; fi 
-  if [[ "$SUT_IP" == "172.17.0.3" ]]; then export SUT_ID=${TRINODE_ID1}; fi 
-  if [[ "$SUT_IP" == "172.17.0.4" ]]; then export SUT_ID=${TRINODE_ID2}; fi 
+  if [[ "$SUT_IP" == "172.17.0.2" ]]; then export SUT_ID=${TRINODE_ID1}; fi 
+  if [[ "$SUT_IP" == "172.17.0.3" ]]; then export SUT_ID=${TRINODE_ID2}; fi 
   if [[ "$SUT_IP" == "172.17.0.33" ]]; then export SUT_ID=${TRINODE_ID3}; fi 
 }
 
@@ -92,6 +91,7 @@ setup() {
 }
 
 @test 'AWS - Get credentials' {
+  if [[ "$VERSION" == "16.04" ]]; then skip; fi
   run docker exec -ti ${SUT_ID} bash -c 'grep demo /root/.aws/credentials'
   echo "output: "$output
   echo "status: "$status
@@ -99,6 +99,7 @@ setup() {
 }
 
 @test 'AWS - create bucket' {
+  if [[ "$VERSION" == "16.04" ]]; then skip; fi
   run docker exec -ti ${SUT_ID} bash -c "aws --endpoint-url http://${SUT_IP}:6007 --no-verify-ssl s3 mb s3://mybucket"
   echo "output: "$output
   echo "status: "$status
@@ -106,6 +107,7 @@ setup() {
 }
 
 @test 'AWS - upload into bucket' {
+  if [[ "$VERSION" == "16.04" ]]; then skip; fi
   run docker exec -ti ${SUT_ID} bash -c "aws --endpoint-url http://${SUT_IP}:6007 --no-verify-ssl s3 cp /etc/passwd s3://mybucket"
   echo "output: "$output
   echo "status: "$status
@@ -113,6 +115,7 @@ setup() {
 }
 
 @test 'AWS - Consistency' {
+  if [[ "$VERSION" == "16.04" ]]; then skip; fi
   md5orig=$(docker exec -ti ${SUT_ID} bash -c 'md5sum /etc/passwd | cut -d" " -f1')
   docker exec -ti ${SUT_ID} bash -c "aws --endpoint-url http://${SUT_IP}:6007 --no-verify-ssl s3 cp s3://mybucket/passwd /tmp/passwd.aws"
   md5sds=$(docker exec -ti ${SUT_ID} bash -c 'md5sum /tmp/passwd.aws | cut -d" " -f1')
@@ -125,6 +128,7 @@ setup() {
 }
 
 @test 'AWS - Delete your object' {
+  if [[ "$VERSION" == "16.04" ]]; then skip; fi
   run docker exec -ti ${SUT_ID} bash -c "aws --endpoint-url http://${SUT_IP}:6007 --no-verify-ssl s3 rm s3://mybucket/passwd"
   echo "output: "$output
   echo "status: "$status
@@ -132,6 +136,7 @@ setup() {
 }
 
 @test 'AWS - Delete your empty bucket' {
+  if [[ "$VERSION" == "16.04" ]]; then skip; fi
   run docker exec -ti ${SUT_ID} bash -c "aws --endpoint-url http://${SUT_IP}:6007 --no-verify-ssl s3 rb s3://mybucket"
   echo "output: "$output
   echo "status: "$status
@@ -143,6 +148,7 @@ setup() {
   echo "output: "$output
   echo "status: "$status
   [[ "${status}" -eq "0" ]]
+  if [[ "$VERSION" == "16.04" ]]; then skip; fi
   run docker exec -ti ${SUT_ID} bash -c "openio account delete AUTH_demo --oio-ns OPENIO"
   echo "output: "$output
   echo "status: "$status

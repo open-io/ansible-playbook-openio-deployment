@@ -1,5 +1,5 @@
 ---
 - src: https://github.com/open-io/ansible-role-openio-users.git
-  version: 1a1597347e1a1f23427398254f8c841337487c97
+  version: "18.10"
   name: users
 ...

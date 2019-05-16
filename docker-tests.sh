@@ -106,6 +106,8 @@ start_container() {
     "${run_opts[@]}" \
     --volume="${PWD}:${role_dir}:ro" \
     -e IPVAGRANT=${IPVAGRANT:=""} \
+    -e USR=${USR:=""} \
+    -e PASS=${PASS:=""} \
     "${image_tag}" \
     "${init}" \
     > "${container_id}"
