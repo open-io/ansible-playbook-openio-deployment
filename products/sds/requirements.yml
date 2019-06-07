@@ -72,7 +72,7 @@
   name: redis
 
 - src: https://github.com/open-io/ansible-role-openio-repository.git
-  version: 60b4cb5ff0bd98ed6e6db384d0e641fba6a26d26
+  version: 9e096f651d4d7a8b7e39e749593e52154f53dd9d
   name: repositories
 
 - src: https://github.com/open-io/ansible-role-openio-users.git
