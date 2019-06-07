@@ -38,7 +38,7 @@ before_install:
     done
   # Lint
   - sudo pip install --upgrade pip
-  - sudo pip install ansible yamllint
+  - sudo pip install 'ansible<2.8' yamllint
   # netaddr
   - sudo pip install netaddr
 
