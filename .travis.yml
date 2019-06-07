@@ -75,7 +75,7 @@ script:
 
   # Run functional tests on the container
   - |
-    for i in 3 4 33; do 
+    for i in 2 3 33; do 
       echo 172.17.0.$i
       SUT_IP=172.17.0.$i ./docker-tests/functional-tests.sh
     done
