@@ -26,11 +26,21 @@
     - name: Install AWS client
       package:
         name: awscli
+      # The installation of awscli is a comfort, it is not necessary
+      ignore_errors: true
+      register: install_awscli
+      until: install_awscli is success
+      retries: 5
+      delay: 2
 
     - name: Install OpenStack client
       package:
         name: python-openstackclient
       ignore_errors: "{{ ansible_check_mode }}"
+      register: install_oscli
+      until: install_oscli is success
+      retries: 5
+      delay: 2
 
     - name: Get AWS credentials (Keystone)
       block:
