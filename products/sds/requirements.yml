@@ -60,11 +60,11 @@
   name: oioproxy
 
 - src: https://github.com/open-io/ansible-role-openio-oioswift.git
-  version: c492fd22232d0137a2330cb14d75f0f8c9473244
+  version: e9587b3fd69f68ce151c9bf5b4db849f14c74660
   name: oioswift
 
 - src: https://github.com/open-io/ansible-role-openio-rawx.git
-  version: 55c0271c012181ea112c1532d7b672cd8cd96ca7
+  version: 6bc606bc0b2e50b57a807a44fbdf1e23af6ee8bf
   name: rawx
 
 - src: https://github.com/open-io/ansible-role-openio-rdir.git
@@ -80,7 +80,7 @@
   name: replicator
 
 - src: https://github.com/open-io/ansible-role-openio-repository.git
-  version: 83b09cba85bd09d4aa86feffa83e00ae4cba4b98
+  version: 234cda676053ca2261b8f0b298c30dac62656cb7
   name: repositories
 
 - src: https://github.com/open-io/ansible-role-openio-users.git
