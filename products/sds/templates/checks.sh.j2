@@ -15,7 +15,8 @@ export NO_PROXY={{ vip }}
 # End environment variables
 {% endif %}
 
-echo '## OPENIO'
+echo '------'
+echo '## OPENIO status'
 export OIO_NS={{ namespace }}
 
 echo -e $YELLOW Status of services. $NC
@@ -25,6 +26,36 @@ echo --
 echo -e $YELLOW Display the cluster status. $NC
 openio cluster list
 echo --
+
+echo '------'
+echo '## OPENIO directory consistency'
+
+# The following tests are only for SDS >= 19.04
+if [ -x /usr/bin/openio-admin ]; then
+    echo -e $YELLOW Check the directory status. $NC
+    openio-admin directory check
+    echo --
+
+    echo -e $YELLOW Check the reverse directory status. $NC
+    openio-admin rdir check
+    echo --
+
+    echo -e $YELLOW Check the meta0 status. $NC
+    openio-admin meta0 check
+    echo --
+
+    echo -e $YELLOW Check the meta1 status. $NC
+    openio-admin meta1 check
+    echo --
+else
+    echo -e $YELLOW "openio-admin not found, skipping directory consistency checks." $NC
+    echo --
+fi
+
+echo
+
+echo '------'
+echo '## OPENIO API'
 
 echo -e $YELLOW Upload the /etc/passwd file to the bucket MY_CONTAINER of the project MY_ACCOUNT. $NC
 openio object create MY_CONTAINER /etc/passwd --oio-account MY_ACCOUNT
@@ -62,7 +93,7 @@ echo --
 echo
 
 echo '------'
-echo '## AWS'
+echo '## AWS API'
 
 echo -e $YELLOW Create a bucket 'mybucket'. $NC
 aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 mb s3://mybucket
@@ -89,15 +120,19 @@ echo -e $YELLOW Delete your empty bucket. $NC
 aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 rb s3://mybucket
 echo --
 
+echo
+
+echo '------'
 echo Done !
 
 echo
+
 echo ++++
 echo -e ${YELLOW} AWS S3 summary:$NC
 echo -e \ $YELLOW endpoint:$NC http://{{ vip }}:6007
-echo -e \ $YELLOW region:$NC $(grep region /root/.aws/config |awk -F'=' '{print $2}')
-echo -e \ $YELLOW access key:$NC $(grep aws_access_key_id /root/.aws/credentials |awk -F'=' '{print $2}')
-echo -e \ $YELLOW secret key:$NC $(grep aws_secret_access_key /root/.aws/credentials |awk -F'=' '{print $2}')
+echo -e \ $YELLOW region:$NC $(grep region /root/.aws/config | awk -F'=' '{print $2}')
+echo -e \ $YELLOW access key:$NC $(grep aws_access_key_id /root/.aws/credentials | awk -F'=' '{print $2}')
+echo -e \ $YELLOW secret key:$NC $(grep aws_secret_access_key /root/.aws/credentials | awk -F'=' '{print $2}')
 echo -e \ $YELLOW ssl:$NC false
 echo -e \ $YELLOW signature_version:$NC s3v4
 echo -e \ $YELLOW path style:$NC true
