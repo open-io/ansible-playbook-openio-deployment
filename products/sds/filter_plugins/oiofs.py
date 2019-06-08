@@ -16,27 +16,37 @@ class FilterModule(object):
     def mounts2nfs(self, mounts=[], mount_directory='/tmp'):
         openio_nfs_exports = []
         for mount in mounts:
-            if 'exports' in mount:
-                if 'nfs' in mount['exports']:
-                    path = (mount['path'] if 'path' in mount else mount_directory + '/oiofs-'
-                            + mount['namespace'] + '-' + mount['account']
-                            + '-' + mount['container'])
-                    opts = mount['exports']['nfs']
-                    opts['mountpoint'] = path
+            if mount.get('export') == 'nfs':
+                opts = mount['nfs_exports']
+            elif 'nfs' in mount.get('exports', {}): # retrocompatibility
+                opts = mount['exports']['nfs']
+            else:
+                continue
 
-                    openio_nfs_exports.append(opts)
+            opts['mountpoint'] = self.mount2mountpoint(mount, mount_directory)
+
+            openio_nfs_exports.append(opts)
         return openio_nfs_exports
 
     def mounts2samba(self, mounts=None, mount_directory='/tmp'):
         openio_samba_exports = []
         for mount in mounts:
-            if 'exports' in mount:
-                if 'samba' in mount['exports']:
-                    path = (mount['path'] if 'path' in mount else mount_directory + '/oiofs-'
-                            + mount['namespace'] + '-' + mount['account'] + '-'
-                            + mount['container'])
-                    opts = mount['exports']['samba']
-                    opts['path'] = path
+            if mount.get('export') == 'samba':
+                opts = mount['samba_exports']
+            elif 'samba' in mount.get('exports', {}): # retrocompatibility
+                opts = mount['exports']['samba']
+            else:
+                continue
 
-                    openio_samba_exports.append(opts)
+            opts['path'] = self.mount2mountpoint(mount, mount_directory)
+
+            openio_samba_exports.append(opts)
         return openio_samba_exports
+
+    @staticmethod
+    def mount2mountpoint(mount, mount_directory):
+        if 'path' in mount:
+            return mount['path']
+
+        return '%s/oiofs-%s-%s-%s' % (mount_directory,
+                mount['namespace'], mount['account'], mount['container'])

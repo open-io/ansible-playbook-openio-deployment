@@ -7,6 +7,12 @@
   vars_files:
     - ../vars/sds.yml
     - ../vars/oiofs.yml
+  tags:
+    - check
+    - checks
+    - check
+    - checks
+    - facts
 
   pre_tasks:
     - name: Gathering needed facts
@@ -33,12 +39,7 @@
       with_items:
         - ansible_devices
         - ansible_mounts
-
-    #- name: openio_oiofs_bind_virtual_address is undefined
-    #  assert:
-    #    that:
-    #      - openio_oiofs_bind_virtual_address is defined
-    #  ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+        - ansible_processor_vcpus
 
     - name: no ECD defined for this node
       assert:
@@ -75,6 +76,19 @@
           - oiofs_cache_folder in ansible_mounts | selectattr('device', 'equalto', oiofs_cache_device) | map(attribute='mount') | list
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
 
+- name: Setup oiofs environment
+  hosts: oiofs
+  any_errors_fatal: true
+  become: true
+  environment: "{{ default_openio_environment }}"
+  vars_files:
+    - ../vars/sds.yml
+    - ../vars/oiofs.yml
+  tags:
+    - repo
+    - repository
+    - users
+    - user
   roles:
     - role: repositories
       openio_repository_manage_openstack_repository: false
@@ -95,6 +109,10 @@
   vars_files:
     - ../vars/sds.yml
     - ../vars/oiofs.yml
+  tags:
+    - redis
+    - oiofs
+
   tasks:
     - name: Gathering network facts
       setup:
@@ -104,7 +122,7 @@
       set_fact:
         openio_bind_address: "{{ openio_bind_address | d(default_openio_bind_address) }}"
 
-- name: Mount oiofs
+- name: Install and configure OIOFS
   hosts: oiofs
   any_errors_fatal: true
   become: true
@@ -112,29 +130,8 @@
   vars_files:
     - ../vars/sds.yml
     - ../vars/oiofs.yml
-
-  pre_tasks:
-    - name: Stat of cache device
-      stat:
-        path: "{{ oiofs_cache_device }}"
-      register: "_oiofs_cache_device"
-
-    - name: Gathering needed facts
-      setup:
-        gather_subset: hardware
-        filter: "{{ item }}"
-      with_items:
-        - ansible_processor_vcpus
-        - ansible_devices
-
-    - name: Create container in OpenIO SDS
-      command: "openio container create {{ item.container }} \
-                  --oio-account {{ item.account }} \
-                  --oio-ns {{ item.namespace | d(namespace) | d(default_namespace) }}
-                  -c Created -f value"
-      with_items: "{{ oiofs_mountpoints }}"
-      register: _openio_container_create
-      changed_when: _openio_container_create.stdout == "True"
+  tags:
+    - oiofs
 
   roles:
     - role: oiofs
@@ -144,7 +141,7 @@
       oiofs_mountpoint_default_cache_size_for_flush_activation: "{{ ((oiofs_mountpoint_default_cache_size_bytes | int) * (oiofs_cache_high_watermark | int) / 100) | int }}"
       oiofs_mountpoint_default_cache_size_on_flush_bytes: "{{ ((oiofs_mountpoint_default_cache_size_bytes | int) * (oiofs_cache_low_watermark | int) / 100) | int }}"
 
-- name: Export oiofs
+- name: Exports oiofs
   hosts: oiofs
   any_errors_fatal: true
   become: true
@@ -152,6 +149,9 @@
   vars_files:
     - ../vars/sds.yml
     - ../vars/oiofs.yml
+  tags:
+    - exports
+    - export
 
   roles:
     - role: nfs
