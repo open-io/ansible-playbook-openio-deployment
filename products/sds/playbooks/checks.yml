@@ -185,14 +185,12 @@
 
     - name: Stop if UID is already used for an account which is not 'openio'
       assert:
-        that: (item.key == 'openio' and (item.value[1] | int) == default_openio_user_openio_uid | int ) or (item.key != 'openio' and (item.value[1] | int) != default_openio_user_openio_uid | int )
-      with_dict: '{{ getent_passwd }}'
+        that: getent_passwd | check_uid('openio', default_openio_user_openio_uid)
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
 
     - name: Stop if GID is already used for an account which is not 'openio'
       assert:
-        that: (item.key == 'openio' and (item.value[2] | int) == default_openio_group_openio_gid | int ) or (item.key != 'openio' and (item.value[2] | int) != default_openio_group_openio_gid | int )
-      with_dict: '{{ getent_passwd }}'
+        that: getent_passwd | check_gid('openio', default_openio_group_openio_gid)
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
 
     - name: Get running process
