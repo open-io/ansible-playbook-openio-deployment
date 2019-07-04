@@ -84,7 +84,7 @@ script:
     done
 
   # loss of 1 server
-  #- docker stop $TRINODE_ID1
-  #- sleep 60
-  #- SUT_IP=172.17.0.33 ./docker-tests/functional-tests.sh
+  - docker stop $TRINODE_ID1
+  - sleep 5 
+  - SUT_IP=172.17.0.33 ./docker-tests/functional-tests.sh
 ...
