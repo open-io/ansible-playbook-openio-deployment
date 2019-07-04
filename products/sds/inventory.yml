@@ -53,7 +53,7 @@ all:
         namespace: OPENIO
         namespace_storage_policy: "THREECOPIES"
         openio_conscience_multiple_enable: true
-        
+
         openio_bind_interface: '{{ ansible_default_ipv4.alias }}'
         openio_bind_address: '{{ ansible_default_ipv4.address }}'
 
@@ -95,7 +95,7 @@ all:
       children:
         backs: {}
       vars:
-       openio_conscienceagent_check_interval: 1
+        openio_conscienceagent_check_interval: 1
 
     ecd:
       children:
@@ -129,10 +129,9 @@ all:
       children:
         openio: {}
       vars:
-        openio_namespace_conscience_url: "{{ hostvars[groups['conscience'][0]]['openio_bind_address'] }}:6000"
         openio_namespace_options:
-        - "proxy.period.cs.upstream=1"
-        - "proxy.period.cs.downstream=2" 
+          - "proxy.period.cs.upstream=1"
+          - "proxy.period.cs.downstream=2"
 
     oio-blob-indexer:
       children:
