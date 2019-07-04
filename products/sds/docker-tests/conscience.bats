@@ -11,13 +11,13 @@ get_ID_node() {
   #for i in $(docker ps -aq); do
   #  export SUT_ID=$(docker inspect $i| grep -B400 ${SUT_IP}|grep Hostname\" | uniq| sed -e 's@.*"\(.*\)",@\1@')
   #done
-  if [[ "$SUT_IP" == "172.17.0.2" ]]; then export SUT_ID=${TRINODE_ID1}; fi 
-  if [[ "$SUT_IP" == "172.17.0.3" ]]; then export SUT_ID=${TRINODE_ID2}; fi 
-  if [[ "$SUT_IP" == "172.17.0.33" ]]; then export SUT_ID=${TRINODE_ID3}; fi 
+  if [[ "$SUT_IP" == "172.17.0.2" ]]; then export SUT_ID=${TRINODE_ID1}; fi
+  if [[ "$SUT_IP" == "172.17.0.3" ]]; then export SUT_ID=${TRINODE_ID2}; fi
+  if [[ "$SUT_IP" == "172.17.0.33" ]]; then export SUT_ID=${TRINODE_ID3}; fi
 }
 
 setup() {
-  run_only_test
+  #run_only_test
   get_ID_node
 }
 
