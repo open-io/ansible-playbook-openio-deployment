@@ -344,11 +344,22 @@ class Runner(object):
             env.update(self.env)
         self._env = TemporaryEnvironment(env)
 
+    def _revert_cwd(self):
+        """
+        #591: make a best-effort attempt to return to :attr:`good_temp_dir`.
+        """
+        try:
+            os.chdir(self.good_temp_dir)
+        except OSError:
+            LOG.debug('%r: could not restore CWD to %r',
+                      self, self.good_temp_dir)
+
     def revert(self):
         """
         Revert any changes made to the process after running a module. The base
         implementation simply restores the original environment.
         """
+        self._revert_cwd()
         self._env.revert()
         self.revert_temp_dir()
 
@@ -760,7 +771,21 @@ class NewStyleRunner(ScriptRunner):
         for fullname, _, _ in self.module_map['custom']:
             mitogen.core.import_module(fullname)
         for fullname in self.module_map['builtin']:
-            mitogen.core.import_module(fullname)
+            try:
+                mitogen.core.import_module(fullname)
+            except ImportError:
+                # #590: Ansible 2.8 module_utils.distro is a package that
+                # replaces itself in sys.modules with a non-package during
+                # import. Prior to replacement, it is a real package containing
+                # a '_distro' submodule which is used on 2.x. Given a 2.x
+                # controller and 3.x target, the import hook never needs to run
+                # again before this replacement occurs, and 'distro' is
+                # replaced with a module from the stdlib. In this case as this
+                # loop progresses to the next entry and attempts to preload
+                # 'distro._distro', the import mechanism will fail. So here we
+                # silently ignore any failure for it.
+                if fullname != 'ansible.module_utils.distro._distro':
+                    raise
 
     def _setup_excepthook(self):
         """

@@ -37,10 +37,13 @@ before_install:
       wget -O docker-tests/${i} https://raw.githubusercontent.com/open-io/ansible-role-openio-skeleton/docker-tests/${i}
     done
   # Lint
-  - sudo pip install --upgrade pip
-  - sudo pip install 'ansible<2.8' yamllint
+  - virtualenv venv
+  - . venv/bin/activate
+  - pip install --upgrade pip
+  - pip install -r ansible.pip
+  - pip install yamllint
   # netaddr
-  - sudo pip install netaddr
+  - pip install netaddr
 
   - ./docker-tests/docker-tests.sh && export TRINODE_ID1=$(docker ps -qa | head -n 1)
   - ./docker-tests/docker-tests.sh && export TRINODE_ID2=$(docker ps -qa | head -n 1)
