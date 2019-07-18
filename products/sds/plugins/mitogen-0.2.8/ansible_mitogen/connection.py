@@ -58,6 +58,15 @@ import ansible_mitogen.transport_config
 LOG = logging.getLogger(__name__)
 
 
+def get_remote_name(spec):
+    """
+    Return the value to use for the "remote_name" parameter.
+    """
+    if spec.mitogen_mask_remote_name():
+        return 'ansible'
+    return None
+
+
 def optional_int(value):
     """
     Convert `value` to an integer if it is not :data:`None`, otherwise return
@@ -135,6 +144,13 @@ def _connect_ssh(spec):
             'connect_timeout': spec.ansible_ssh_timeout(),
             'ssh_args': spec.ssh_args(),
             'ssh_debug_level': spec.mitogen_ssh_debug_level(),
+            'remote_name': get_remote_name(spec),
+            'keepalive_count': (
+                spec.mitogen_ssh_keepalive_count() or 10
+            ),
+            'keepalive_interval': (
+                spec.mitogen_ssh_keepalive_interval() or 30
+            ),
         }
     }
 
@@ -150,6 +166,7 @@ def _connect_docker(spec):
             'container': spec.remote_addr(),
             'python_path': spec.python_path(),
             'connect_timeout': spec.ansible_ssh_timeout() or spec.timeout(),
+            'remote_name': get_remote_name(spec),
         }
     }
 
@@ -166,6 +183,7 @@ def _connect_kubectl(spec):
             'connect_timeout': spec.ansible_ssh_timeout() or spec.timeout(),
             'kubectl_path': spec.mitogen_kubectl_path(),
             'kubectl_args': spec.extra_args(),
+            'remote_name': get_remote_name(spec),
         }
     }
 
@@ -181,6 +199,7 @@ def _connect_jail(spec):
             'container': spec.remote_addr(),
             'python_path': spec.python_path(),
             'connect_timeout': spec.ansible_ssh_timeout() or spec.timeout(),
+            'remote_name': get_remote_name(spec),
         }
     }
 
@@ -196,6 +215,7 @@ def _connect_lxc(spec):
             'python_path': spec.python_path(),
             'lxc_attach_path': spec.mitogen_lxc_attach_path(),
             'connect_timeout': spec.ansible_ssh_timeout() or spec.timeout(),
+            'remote_name': get_remote_name(spec),
         }
     }
 
@@ -211,6 +231,7 @@ def _connect_lxd(spec):
             'python_path': spec.python_path(),
             'lxc_path': spec.mitogen_lxc_path(),
             'connect_timeout': spec.ansible_ssh_timeout() or spec.timeout(),
+            'remote_name': get_remote_name(spec),
         }
     }
 
@@ -254,6 +275,7 @@ def _connect_su(spec):
             'python_path': spec.python_path(),
             'su_path': spec.become_exe(),
             'connect_timeout': spec.timeout(),
+            'remote_name': get_remote_name(spec),
         }
     }
 
@@ -272,6 +294,7 @@ def _connect_sudo(spec):
             'sudo_path': spec.become_exe(),
             'connect_timeout': spec.timeout(),
             'sudo_args': spec.sudo_args(),
+            'remote_name': get_remote_name(spec),
         }
     }
 
@@ -289,6 +312,7 @@ def _connect_doas(spec):
             'python_path': spec.python_path(),
             'doas_path': spec.become_exe(),
             'connect_timeout': spec.timeout(),
+            'remote_name': get_remote_name(spec),
         }
     }
 
@@ -305,6 +329,7 @@ def _connect_mitogen_su(spec):
             'python_path': spec.python_path(),
             'su_path': spec.become_exe(),
             'connect_timeout': spec.timeout(),
+            'remote_name': get_remote_name(spec),
         }
     }
 
@@ -322,6 +347,7 @@ def _connect_mitogen_sudo(spec):
             'sudo_path': spec.become_exe(),
             'connect_timeout': spec.timeout(),
             'sudo_args': spec.sudo_args(),
+            'remote_name': get_remote_name(spec),
         }
     }
 
@@ -336,8 +362,9 @@ def _connect_mitogen_doas(spec):
             'username': spec.remote_user(),
             'password': spec.password(),
             'python_path': spec.python_path(),
-            'doas_path': spec.become_exe(),
+            'doas_path': spec.ansible_doas_exe(),
             'connect_timeout': spec.timeout(),
+            'remote_name': get_remote_name(spec),
         }
     }
 

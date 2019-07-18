@@ -11,7 +11,7 @@
       assert:
         that:
           - ansible_version.full is version_compare('2.5.0', '>=')
-          - ansible_version.full is version_compare('2.8.0', '<')
+          - ansible_version.full is version_compare('2.9.0', '<')
       check_mode: false
 
     - name: number of zookeeper hosts
