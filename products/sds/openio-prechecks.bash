@@ -2,8 +2,8 @@
 #
 # This script must be run on each node on which OpenIO SDS will be installed.
 # It must be run using bash:
-#   /path/to/openio-precheck.bash
-#   bash openio-precheck.bash
+#   /path/to/openio-prechecks.bash
+#   bash openio-prechecks.bash
 #
 # It will check the basics before continuing with ansible inventory and stuff
 #
