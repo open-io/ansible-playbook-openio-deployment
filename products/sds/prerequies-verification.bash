@@ -1,44 +1,80 @@
 #!/bin/bash
+#
+# This script must be run on each node on which OpenIO SDS will be installed.
+# It must be run using bash:
+#   /path/to/openio-precheck.bash
+#   bash openio-precheck.bash
+#
+# It will check the basics before continuing with ansible inventory and stuff
+#
+# Copyright (C) 2019 OpenIO
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+# 
+# Ensure script is run from bash and not from another shell
+#
 if [ "$_" != "$0" -a "$_" != "/bin/bash" ]; then
   cat 1>&2 <<EOF
+
 "*** ERROR ***
   This script must be run with bash !
-
 EOF
   exit 1
 fi
 
+
+#
 # Colors
+#
 RED="\e[31m"
 GREEN="\e[32m"
 YELLOW="\e[33m"
 BLUE="\e[34m"
 NC="\e[39m"
 
-
+#
 # where to save results (array)
+#
 declare -a results
 
+#
 # Function to be called at exit to print tests results
+#
 function my_exit {
   local overall=0
   local output=""
 
   echo
   for result in "${results[@]}"; do
-    local ret=${result%%:*}
-    local cmd=${result##*:}
-    if [ -z "$ret" ]; then
-      cmd="${BLUE}*** $cmd ***${NC}"
+
+    # Each value is formatted as follow: %{label}:%{return value}
+    local label=${result##*:} # Extract test label
+    local ret=${result%%:*} # Extract return value
+
+    if [ -z "$ret" ]; then # if not return value
+      label="${BLUE}*** $label ***${NC}" # just a group label
     else
       if [ $ret -eq 0 ]; then
-        ret="${GREEN}OK${NC}"
+        ret="${GREEN}OK${NC}" # OK
       else 
-        ret="${RED}KO${NC}"
-        overall=1
+        ret="${RED}KO${NC}"   # KO
+        overall=1             # set overall return value
       fi
     fi
-    output+="$cmd,$ret\n"
+    output+="$label,$ret\n"
   done
 
 
@@ -51,25 +87,30 @@ function my_exit {
     output+="${RED}KO${NC}\n"
   fi
 
+  # final output before exiting the script
   echo -e $output | column -t -s,
 }
 
+#
 # Catch 'Exit' signal
+#
 trap 'my_exit' EXIT
 
+#
 # Function to run command
 # Usage:
 # run <command> [<label>] [stop]
 # <command> is a shell command to be run
 # <label> is the label of the command (defaults to <command>)
 # <stop> whether to stop the script on failure (defaults to continue)
+#
 function run {
 
   local cmd="$1"
 
-  local label="${2:--}"
-  if [ "$label" = "-" ]; then
-    label="$cmd"
+  local label="${2:--}" # defaults to '-'
+  if [ "$label" = "-" ]; then # if '-'
+    label="$cmd" # defaults to cmd
   fi
 
   local stop="$3"
@@ -83,8 +124,9 @@ function run {
 
   eval $cmd
   local ret=$?
-  results+=("$ret:$label")
+  results+=("$ret:$label") # Save result to global array
 
+  # print result
   echo -ne "${YELLOW}Result: ${NC}"
   if [ $ret -eq 0 ]; then
     echo -e "${GREEN}OK${NC}"
@@ -93,6 +135,7 @@ function run {
   fi
   echo "--"
 
+  # return or exit depending on stop argument
   if ((stop)); then
     exit $ret
   else
@@ -100,6 +143,9 @@ function run {
   fi
 }
 
+#
+# Add a group
+#
 function group {
   local label="$*"
   echo
@@ -108,6 +154,11 @@ function group {
   results+=(":$label")
 }
 
+#
+# check_os
+#
+# Only CentOS 7, Ubuntu 16.04 and Ubuntu 18.04
+#
 _OS=unknown
 function check_os {
   # CentOS
@@ -118,6 +169,7 @@ function check_os {
     return $ret
   fi
 
+  # Ubuntu
   if [ -f /etc/lsb-release ]; then
     cat /etc/lsb-release | grep '^DISTRIB_RELEASE=\(16\.04\|18\.04\)$'
     local ret=$?
@@ -129,6 +181,9 @@ function check_os {
   return 1
 }
 
+#
+# chek_kernel >= 3.10
+#
 KERNEL_MIN_VERSION=3.10
 function check_kernel {
 
@@ -140,6 +195,9 @@ function check_kernel {
   #return $?
 }
 
+# 
+# Main checks
+#
 
 group "Basic checks"
 run "check_os" "OS"
