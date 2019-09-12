@@ -211,7 +211,7 @@ if [ $_OS = "CENTOS" ]; then
   run 'systemctl is-enabled firewalld; [[ $? -ne 0 ]]' 'firewalld is disabled'
   run 'systemctl is-active sshd' 'OpenSSH Server is active'
   run 'systemctl is-enabled sshd' 'OpenSSH Server is enabled'
-  run 'curl -s --dump-header - http://mirror.openio.io/pub/repo/openio/sds/current/centos/ | grep "200 OK"' 'OpenIO repository is reachable'
+  run 'curl -qsI http://mirror.openio.io/pub/repo/openio/sds/current/centos/ | head -n1 | grep "200 OK"' 'OpenIO repository is reachable'
 fi
 
 if [ $_OS = "UBUNTU" ]; then
@@ -221,7 +221,7 @@ if [ $_OS = "UBUNTU" ]; then
   run 'systemctl is-enabled ufw; [[ $? -ne 0 ]]' 'ufw is disabled'
   run 'systemctl is-active ssh' 'OpenSSH Server is active'
   run 'systemctl is-enabled ssh' 'OpenSSH Server is enabled'
-  run 'curl -s --dump-header - http://mirror.openio.io/pub/repo/openio/sds/current/Ubuntu/ | grep "200 OK"' 'OpenIO repository is reachable'
+  run 'curl -qsI http://mirror.openio.io/pub/repo/openio/sds/current/Ubuntu/ | head -n1 | grep "200 OK"' 'OpenIO repository is reachable'
 fi
 
 
