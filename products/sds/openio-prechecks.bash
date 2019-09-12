@@ -203,12 +203,15 @@ group "Basic checks"
 run "check_os" "OS"
 run 'id; [[ $(id -u) -eq 0 ]]' "Run as root"
 run "python --version 2>&1 | grep '^Python \(3\|2\.7\)\.'" "Python exists"
+run 'getent passwd 120; [[ $? -ne 0 ]]' "uid 120 is available"
+run 'getent group 220; [[ $? -ne 0 ]]' "gid 220 is available"
 if [ $_OS = "CENTOS" ]; then
   run '[ -x /usr/sbin/getenforce -a "$(/usr/sbin/getenforce)" = "Disabled" ]' "SELinux is disabled"
   run 'systemctl is-active firewalld; [[ $? -ne 0 ]]' 'firewalld is active'
   run 'systemctl is-enabled firewalld; [[ $? -ne 0 ]]' 'firewalld is disabled'
   run 'systemctl is-active sshd' 'OpenSSH Server is active'
   run 'systemctl is-enabled sshd' 'OpenSSH Server is enabled'
+  run 'curl -s --dump-header - http://mirror.openio.io/pub/repo/openio/sds/current/centos/ | grep "200 OK"' 'OpenIO repository is reachable'
 fi
 
 if [ $_OS = "UBUNTU" ]; then
@@ -218,6 +221,7 @@ if [ $_OS = "UBUNTU" ]; then
   run 'systemctl is-enabled ufw; [[ $? -ne 0 ]]' 'ufw is disabled'
   run 'systemctl is-active ssh' 'OpenSSH Server is active'
   run 'systemctl is-enabled ssh' 'OpenSSH Server is enabled'
+  run 'curl -s --dump-header - http://mirror.openio.io/pub/repo/openio/sds/current/Ubuntu/ | grep "200 OK"' 'OpenIO repository is reachable'
 fi
 
 
