@@ -1,10 +1,20 @@
 #!/usr/bin/python
+
+HUMAN_UNITS = {
+    'KB': 1024,
+    'MB': 1048576,
+    'GB': 1073741824,
+    'TB': 1099511627776,
+}
+
 class FilterModule(object):
+
     def filters(self):
         return {
             'dict2string': self.dict2string,
             'mounts2nfs': self.mounts2nfs,
             'mounts2samba': self.mounts2samba,
+            'smallest_device': self.smallest_device,
         }
 
     def dict2string(self, input_dict):
@@ -50,3 +60,19 @@ class FilterModule(object):
 
         return '%s/oiofs-%s-%s-%s' % (mount_directory,
                 mount['namespace'], mount['account'], mount['container'])
+
+    def smallest_device(self, oiofs_cache_devices, ansible_devices={}, ansible_mounts={}):
+        smallest_device = ""
+        smallest_size = 0
+
+        for device in oiofs_cache_devices:
+            if ansible_devices.get(device.split('/')[-1]):  ## block device
+                human_size = ansible_devices[device.split('/')[-1]]['size']
+                bytes_size = int(float(human_size.split()[0])) * HUMAN_UNITS[human_size.split()[1]]
+            else:  # mount
+                bytes_size = next(item["size_total"] for item in ansible_mounts if item["device"] == device)
+
+            if smallest_size == 0 or bytes_size < smallest_size:
+                smallest_size = bytes_size
+                smallest_device = device
+        return smallest_device

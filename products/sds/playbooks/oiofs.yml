@@ -1,7 +1,7 @@
 ---
 - name: Setup oiofs environment
   hosts: oiofs
-  any_errors_fatal: true
+  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
   become: true
   environment: "{{ default_openio_environment }}"
   vars_files:
@@ -10,43 +10,16 @@
   tags:
     - check
     - checks
-    - check
-    - checks
     - facts
 
   pre_tasks:
-    - name: Gathering needed facts
-      setup:
-        gather_subset: min
-        filter: "{{ item }}"
-      with_items:
-        - ansible_distribution
-        - ansible_os_family
-        - ansible_system
-        - ansible_lsb
-        - ansible_distribution_release
-        - ansible_distribution_version
-        - ansible_distribution_major_version
-
-    - name: Gathering network facts
-      setup:
-        gather_subset: network
-
-    - name: Gathering needed facts
-      setup:
-        gather_subset: hardware
-        filter: "{{ item }}"
-      with_items:
-        - ansible_devices
-        - ansible_mounts
-        - ansible_processor_vcpus
-
     - name: no ECD defined for this node
       assert:
         that:
           - groups.ecd is defined
           - inventory_hostname in groups.ecd
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      tags: configure
 
     - name: no OIOPROXY defined for this node
       assert:
@@ -54,6 +27,7 @@
           - groups.oioproxy is defined
           - inventory_hostname in groups.oioproxy
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      tags: configure
 
     - name: no credentials for the oiofs repository
       assert:
@@ -63,22 +37,65 @@
           - openio_repositories_credentials.oiofs.user is defined
           - openio_repositories_credentials.oiofs.password is defined
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      tags: configure
 
-    - name: Cache device is absent
+    - name: oiofs_cache_device or oiofs_cache_devices must be defined
       assert:
-        that:
-          - oiofs_cache_device.split('/')[-1] in ansible_devices
+        that: >
+          oiofs_cache_device is defined
+          or oiofs_cache_devices is defined
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      tags: configure
+
+    - name: oiofs_cache_folder or oiofs_cache_folders must be defined
+      assert:
+        that: >
+          oiofs_cache_folder is defined
+          or oiofs_cache_folders is defined
+      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      tags: configure
+
+    - name: Cache device must a partition or a block device
+      assert:
+        that: >
+          oiofs_cache_device in (ansible_mounts | map(attribute='device') | list)
+          or oiofs_cache_device.split('/')[-1] in ansible_devices
+      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      tags: configure
+      when: oiofs_cache_device is defined
+
+    - name: Cache devices must a partition or a block device
+      assert:
+        that: >
+          item in (ansible_mounts | map(attribute='device') | list)
+          or item.split('/')[-1] in ansible_devices
+      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      tags: configure
+      with_items: "{{ oiofs_cache_devices }}"
+      when: oiofs_cache_devices is defined
 
     - name: Cache device is mounted
       assert:
         that:
           - oiofs_cache_folder in ansible_mounts | selectattr('device', 'equalto', oiofs_cache_device) | map(attribute='mount') | list
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      tags: configure
+      when: oiofs_cache_folder is defined
+
+    - name: Cache devices are mounted
+      assert:
+        that:
+          - item.0 in ansible_mounts | selectattr('device', 'equalto', item.1) | map(attribute='mount') | list
+      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      tags: configure
+      with_together:
+        - "{{ oiofs_cache_folders }}"
+        - "{{ oiofs_cache_devices }}"
+      when: oiofs_cache_folders is defined
 
 - name: Setup oiofs environment
   hosts: oiofs
-  any_errors_fatal: true
+  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
   become: true
   environment: "{{ default_openio_environment }}"
   vars_files:
@@ -89,6 +106,8 @@
     - repository
     - users
     - user
+    - install
+
   roles:
     - role: repositories
       openio_repository_manage_openstack_repository: false
@@ -103,28 +122,9 @@
 
     - role: users
 
-- name: OpenIO FS - Collect facts of redis nodes
-  hosts: "{{ default_oiofs_global_redis_inventory_groupname }}"
-  environment: "{{ default_openio_environment }}"
-  vars_files:
-    - ../vars/sds.yml
-    - ../vars/oiofs.yml
-  tags:
-    - redis
-    - oiofs
-
-  tasks:
-    - name: Gathering network facts
-      setup:
-        gather_subset: network
-
-    - name: set openio_bind_address as fact
-      set_fact:
-        openio_bind_address: "{{ openio_bind_address | d(default_openio_bind_address) }}"
-
 - name: Install and configure OIOFS
   hosts: oiofs
-  any_errors_fatal: true
+  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
   become: true
   environment: "{{ default_openio_environment }}"
   vars_files:
@@ -133,17 +133,29 @@
   tags:
     - oiofs
 
+  pre_tasks:
+    - name: Set smallest cache device
+      set_fact:
+        smallest_device: "{% if oiofs_cache_device is defined %}{{oiofs_cache_device}}{% else %}{{ oiofs_cache_devices | smallest_device(ansible_devices, ansible_mounts) }}{% endif %}"
+
+    - name: Set cache size
+      set_fact:
+        cache_size_bytes: "{{ (ansible_devices[smallest_device.split('/')[-1]]['size'] | human_to_bytes | int) \
+          if smallest_device.split('/')[-1] in ansible_devices \
+          else ansible_mounts | selectattr('device', 'equalto', smallest_device) | map(attribute='size_total') | list | first | int }}"
+      tags: configure
+
   roles:
     - role: oiofs
       oiofs_mountpoint_default_mount_directory: "{{ oiofs_global_mount_directory }}"
-      oiofs_mountpoint_default_cache_directory: "{{ oiofs_cache_folder }}"
-      oiofs_mountpoint_default_cache_size_bytes: "{{ ansible_devices[oiofs_cache_device.split('/')[-1]]['size'] | human_to_bytes }}"
-      oiofs_mountpoint_default_cache_size_for_flush_activation: "{{ ((oiofs_mountpoint_default_cache_size_bytes | int) * (oiofs_cache_high_watermark | int) / 100) | int }}"
-      oiofs_mountpoint_default_cache_size_on_flush_bytes: "{{ ((oiofs_mountpoint_default_cache_size_bytes | int) * (oiofs_cache_low_watermark | int) / 100) | int }}"
+      oiofs_mountpoint_default_cache_directory: "{% if oiofs_cache_folder is defined %}{{oiofs_cache_folder}}{% else %}{{ oiofs_cache_folders }}{% endif %}"
+      oiofs_mountpoint_default_cache_size_bytes: "{{ cache_size_bytes }}"
+      oiofs_mountpoint_default_cache_size_for_flush_activation: "{{ (cache_size_bytes | int * oiofs_cache_high_watermark | int) / 100 | int }}"
+      oiofs_mountpoint_default_cache_size_on_flush_bytes: "{{ (cache_size_bytes | int * oiofs_cache_low_watermark | int) / 100 | int }}"
 
 - name: Exports oiofs
   hosts: oiofs
-  any_errors_fatal: true
+  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
   become: true
   environment: "{{ default_openio_environment }}"
   vars_files:
@@ -156,12 +168,13 @@
   roles:
     - role: nfs
       openio_nfs_exports: "{{ oiofs_mountpoints | mounts2nfs(oiofs_global_mount_directory) }}"
+      openio_nfs_systemd_managed: "{{ default_openio_services_systemd_enabled }}"
       when: oiofs_mountpoints | mounts2nfs(oiofs_global_mount_directory)
 
     - role: samba
       openio_samba_mountpoints: "{{ oiofs_mountpoints | mounts2samba(oiofs_global_mount_directory) }}"
       openio_samba_service_state: started
-      openio_samba_service_enabled: true
+      openio_samba_service_enabled: "{{ default_openio_services_systemd_enabled }}"
       when: oiofs_mountpoints | mounts2samba(oiofs_global_mount_directory)
 
   tasks:
@@ -174,5 +187,6 @@
       register: create_user_output
       changed_when: "'Added user' in create_user_output.stdout"
       run_once: true
-      when: oiofs_mountpoints | mounts2samba(oiofs_global_mount_directory) | bool
+      when: oiofs_mountpoints | mounts2samba(oiofs_global_mount_directory)
+      tags: configure
 ...

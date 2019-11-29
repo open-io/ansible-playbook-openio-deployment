@@ -1,0 +1,219 @@
+#!/bin/bash
+{% set vip = openio_bind_address %}
+
+# Colors
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+BLUE="\e[34m"
+NC="\e[39m"
+
+
+# where to save results (array)
+declare -a results
+
+# Function to be called at exit to print tests results
+function my_exit {
+  local overall=0
+  local output=""
+
+  echo
+  echo -e "${BLUE}*** Commands summary ***${NC}"
+  echo
+  for result in "${results[@]}"; do
+    local ret=${result%%:*}
+    local cmd=${result##*:}
+    if [ -z "$ret" ]; then
+      cmd="${BLUE}*** $cmd ***${NC}"
+    else
+      if [ $ret -eq 0 ]; then
+        ret="${GREEN}OK${NC}"
+      else
+        ret="${RED}KO${NC}"
+        overall=1
+      fi
+    fi
+    output+="$cmd,$ret\n"
+  done
+
+
+  output+="${BLUE}-------------------${NC}\n"
+
+  output+="Overall check result,"
+  if [ $overall -eq 0 ]; then
+    output+="${GREEN}OK${NC}\n"
+  else
+    output+="${RED}KO${NC}\n"
+  fi
+
+  echo -e $output | column -t -s,
+
+{% if groups.oioswift is defined and groups.oioswift|length  %}
+  [[ $overall -ne 0 ]] && return
+
+  echo
+  echo ++++
+  echo -e "${YELLOW} AWS S3 summary from (/root/.aws/credentials):$NC"
+  echo -e " $YELLOW endpoint:$NC http://{{ vip }}:6007"
+  echo -e " $YELLOW region:$NC $(grep region /root/.aws/config | awk -F'=' '{print $2}')"
+  echo -e " $YELLOW access key:$NC $(grep aws_access_key_id /root/.aws/credentials | awk -F'=' '{print $2}')"
+  echo -e " $YELLOW secret key:$NC $(grep aws_secret_access_key /root/.aws/credentials | awk -F'=' '{print $2}')"
+  echo -e " $YELLOW ssl:$NC false"
+  echo -e " $YELLOW signature_version:$NC s3v4"
+  echo -e " $YELLOW path style:$NC true"
+{% endif %}
+}
+
+# Catch 'Exit' signal
+trap 'my_exit' EXIT
+
+# Function to run command
+# Usage:
+# run <command> [<label>] [stop]
+# <command> is a shell command to be run
+# <label> is the label of the command (defaults to <command>)
+# <stop> whether to stop the script on failure (defaults to continue)
+function run {
+
+  local cmd="$1"
+
+  local label="${2:--}"
+  if [ "$label" = "-" ]; then
+    label="$cmd"
+  fi
+
+  local stop="$3"
+  if [ "$stop" = "true" -o "$stop" = "1" ]; then
+    stop=1
+  else
+    stop=0
+  fi
+
+  echo -e "${YELLOW}${label}.${NC}"
+
+  local start=$(($(date +%s%N)/1000000))
+  eval $cmd
+  local ret=$?
+  local end=$(($(date +%s%N)/1000000))
+  results+=("$ret:$label")
+
+  echo "Task duration: $(( $end - $start ))ms"
+  echo "--"
+
+  if ((stop)); then
+    exit $ret
+  else
+    return $ret
+  fi
+}
+
+function group {
+  local label="$*"
+  echo
+  echo "--------"
+  echo "## ${label}."
+  results+=(":$label")
+}
+
+{% if openio_environment is defined %}
+# Environment variables
+{% for key in openio_environment.keys() %}
+export {{ key }}={{ openio_environment[key] }}
+{% endfor %}
+{% if openio_environment.http_proxy is defined or openio_environment.https_proxy is defined %}
+export NO_PROXY={{ vip }}
+{% endif %}
+# End environment variables
+{% endif %}
+
+
+export OIO_NS={{ namespace }}
+
+group "OpenIO status"
+run "gridinit_cmd status -c" "Check the services" \
+&& run "openio cluster list" "Check the cluster"
+
+[[ $? -ne 0 ]] && exit $? # Stop if the previous group failed
+
+if [ -x /usr/bin/openio-admin ]; then
+  group "OpenIO directory consistency"
+
+  ret=0
+
+  run "openio-admin directory check" "directory status"
+  ((ret+=$?))
+
+  run "openio-admin rdir check" "reverse directory status"
+  ((ret+=$?))
+
+  run "openio-admin meta0 check" "meta0 status"
+  ((ret+=$?))
+
+  run "openio-admin meta1 check" "meta1 status"
+  ((ret+=$?))
+
+  [[ $ret -ne 0 ]] && exit $ret # Stop if one of the check failed
+fi
+
+
+group "OpenIO API"
+run \
+  "openio object create MY_CONTAINER /etc/passwd --oio-account MY_ACCOUNT" \
+  "Upload the /etc/passwd file to the bucket MY_CONTAINER of the project MY_ACCOUNT" \
+&& run \
+  "openio container show MY_CONTAINER --oio-account MY_ACCOUNT" \
+  "Get some information about your object" \
+&& run \
+  "openio object list --oio-account MY_ACCOUNT MY_CONTAINER" \
+  "List object in container" \
+&& run \
+  "openio container locate MY_CONTAINER --oio-account MY_ACCOUNT" \
+  "Find the services involved for your container" \
+&& run \
+  "rm -f /tmp/passwd; openio object save MY_CONTAINER passwd --oio-account MY_ACCOUNT --file /tmp/passwd" \
+  "Save the data stored in the given object to the '--file' destination" \
+&& run \
+  "cmp /etc/passwd /tmp/passwd && echo OK" \
+  "Compare local file against data from SDS" \
+&& run \
+  "openio account show MY_ACCOUNT" \
+  "Show the account informations" \
+&& run \
+  "openio object delete MY_CONTAINER passwd --oio-account MY_ACCOUNT" \
+  "Delete your object" \
+&& run \
+  "openio container delete MY_CONTAINER --oio-account MY_ACCOUNT" \
+  "Delete your empty container"
+
+[[ $? -ne 0 ]] && exit $? # Stop if the previous group failed
+
+{% if groups.oioswift is defined and groups.oioswift|length  %}
+group "AWS API"
+run \
+  "aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 mb s3://mybucket" \
+  "Create a bucket 'mybucket'" \
+&& run \
+  "aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 cp /etc/passwd s3://mybucket" \
+  "Upload the '/etc/passwd' file to the bucket 'mybucket'" \
+&& run \
+  "aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 ls s3://mybucket --recursive --human-readable --summarize" \
+  "List your buckets" \
+&& run \
+  "rm -f /tmp/passwd.aws ; aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 cp s3://mybucket/passwd /tmp/passwd.aws" \
+  "Save the data stored in the given object to the given file" \
+&& run \
+  "cmp /etc/passwd /tmp/passwd.aws && echo OK || echo FAILED" \
+  "Compare local file against data from SDS" \
+&& run \
+  "aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 rm s3://mybucket/passwd" \
+  "Delete your object" \
+&& run \
+  "aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 rb s3://mybucket" \
+  "Delete your empty bucket"
+
+[[ $? -ne 0 ]] && exit $? # Stop if the previous group failed
+{% endif %}
+
+
+echo '------'
+echo Done !

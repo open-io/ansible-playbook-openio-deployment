@@ -2,7 +2,7 @@ roles/*
 *.retry
 *.pyc
 
-venv/*
+openio_venv/*
 
 # safe playbook update
 #group_vars/*

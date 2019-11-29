@@ -2,27 +2,10 @@
 - name: POSTINSTALL - Configure node for test
   hosts: oioswift
   become: true
-  any_errors_fatal: true
+  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
   environment: "{{ default_openio_environment }}"
   vars_files:
     - ../vars/sds.yml
-
-  pre_tasks:
-    - name: Gathering network facts
-      setup:
-        gather_subset: network
-
-    - name: Gathering needed facts
-      setup:
-        gather_subset: min
-        filter: "{{ item }}"
-      with_items:
-        - ansible_distribution
-        - ansible_os_family
-
-    - name: set openio_bind_address as fact
-      set_fact:
-        openio_bind_address: "{{ openio_bind_address | d(default_openio_bind_address) }}"
 
   tasks:
     - name: Install AWS client
@@ -34,6 +17,7 @@
       until: install_awscli is success
       retries: 5
       delay: 2
+      tags: install
 
     - name: Install OpenStack client
       package:
@@ -43,6 +27,7 @@
       until: install_oscli is success
       retries: 5
       delay: 2
+      tags: install
 
     - name: Get AWS credentials (Keystone)
       block:
@@ -56,7 +41,7 @@
             OS_PROJECT_NAME: demo
             OS_USERNAME: demo
             OS_PASSWORD: "{{ openio_keystone_demo_password | d('DEMO_PASS') }}"
-            OS_AUTH_URL: "http://{{ openio_bind_virtual_address }}:5000"
+            OS_AUTH_URL: "{{'http://' ~ openio_bind_virtual_address ~ ':5000' if openio_bind_virtual_address is defined else '' }}"
             OS_IDENTITY_API_VERSION: 3
             OS_IMAGE_API_VERSION: 2
           until: cred is success
@@ -75,12 +60,13 @@
           set_fact:
             access: "{{ ( cred.stdout | from_json )['access'] }}"
             secret: "{{ ( cred.stdout | from_json )['secret'] }}"
-          when: aws_cred | failed
+          when: aws_cred is failed
       when:
         - groups.keystone is defined
         - "'keystone' in groups"
         - groups.keystone | length > 0
       ignore_errors: "{{ ansible_check_mode }}"
+      tags: configure
 
     - name: Get AWS credentials (Tempauth)
       block:
@@ -104,12 +90,14 @@
 
       ignore_errors: "{{ ansible_check_mode }}"
       when: openio_oioswift_filter_tempauth is defined
+      tags: configure
 
     - name: Create .aws folder
       file:
         path: /root/.aws
         state: directory
         mode: 0750
+      tags: configure
 
     - name: Set aws credentials
       no_log: "{{ default_openio_no_log }}"
@@ -120,6 +108,7 @@
           aws_access_key_id = {{ access }}
           aws_secret_access_key = {{ secret }}
       ignore_errors: "{{ ansible_check_mode }}"
+      tags: configure
 
     - name: Configure environment for test
       copy:
@@ -140,12 +129,22 @@
           content: |
             export OIO_NS={{ namespace | d(default_namespace) }}
       ignore_errors: "{{ ansible_check_mode }}"
+      tags: configure
 
-    - name: Add script for tests in /root/checks.sh
+    - name: Add script for tests in /usr/bin/openio-basic-checks
       template:
-        src: "{{ playbook_dir ~ '/../templates/checks.sh.j2' }}"
-        dest: /root/checks.sh
+        src: "{{ playbook_dir ~ '/../templates/openio-basic-checks.j2' }}"
+        dest: /usr/bin/openio-basic-checks
         owner: root
         group: root
         mode: 0750
+      tags: configure
+
+    - name: Link check script to /root/checks.sh
+      file:
+        src: /usr/bin/openio-basic-checks
+        dest: /root/checks.sh
+        state: link
+        force: true
+      tags: configure
 ...

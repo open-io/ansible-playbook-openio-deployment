@@ -1,0 +1,6 @@
+FROM centos/systemd
+
+RUN yum install -y iproute libselinux-python
+
+VOLUME ["/sys/fs/cgroup"]
+CMD ["/usr/sbin/init"]

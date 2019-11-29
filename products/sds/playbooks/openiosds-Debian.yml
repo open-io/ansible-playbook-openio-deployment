@@ -10,6 +10,7 @@
   until: install_rsyslog is success
   retries: 5
   delay: 2
+  tags: install
 
 - name: "Install needed packages"
   apt:
@@ -27,6 +28,7 @@
   until: install_pkg is success
   retries: 5
   delay: 2
+  tags: install
 
 - name: Set rsyslog configuration
   copy:
@@ -36,10 +38,12 @@
     group: root
     mode: 0644
   register: _rsyslog_openio
+  tags: configure
 
 - name: Reload rsyslog
   systemd:
     name: rsyslog
     state: restarted
   when: _rsyslog_openio is changed
+  tags: configure
 ...
