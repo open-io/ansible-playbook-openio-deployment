@@ -3,7 +3,10 @@ version: "2.2"
 
 services:
   node1:
-    image: centos/systemd
+    build:
+      context: .
+      dockerfile: df-centos7
+    image: centos7:systemd
     container_name: node1
     hostname: node1
     networks:
@@ -15,7 +18,7 @@ services:
     command: /usr/lib/systemd/systemd
 
   node2:
-    image: centos/systemd
+    image: centos7:systemd
     container_name: node2
     hostname: node2
     networks:
@@ -27,7 +30,7 @@ services:
     command: /usr/lib/systemd/systemd
 
   node3:
-    image: centos/systemd
+    image: centos7:systemd
     container_name: node3
     hostname: node3
     networks:
@@ -39,7 +42,7 @@ services:
     command: /usr/lib/systemd/systemd
 
   #node4:
-  #  image: centos/systemd
+  #  image: centos7:systemd
   #  container_name: node4
   #  hostname: node4
   #  networks:
@@ -49,7 +52,6 @@ services:
   #  command: /usr/lib/systemd/systemd
   #  volumes:
   #    - "/sys/fs/cgroup:/sys/fs/cgroup"
-  #    - "/tmp/cache:/mnt/oiofs_cache"
 
 networks:
   openio:

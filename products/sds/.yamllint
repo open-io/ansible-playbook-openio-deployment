@@ -1,8 +1,8 @@
 ---
 ignore: |
-  roles/
+  roles
   .travis.yml
-  venv/
+  openio_venv
 rules:
   braces:
     level: error

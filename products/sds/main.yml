@@ -1,4 +1,48 @@
 ---
+- name: Caching facts
+  hosts: openio:oiofs_ha:oiofs:admin
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tags:
+    - always
+    - facts
+    - fact
+  vars_files:
+    - vars/sds.yml
+
+  tasks:
+    - name: Gather hardware facts
+      setup:
+        gather_subset: '!all,!min,hardware'
+        filter: '{{ item }}'
+      when: hostvars[inventory_hostname][item] is not defined
+      loop:
+        - ansible_memtotal_mb
+        - ansible_processor_vcpus
+        - ansible_devices
+        - ansible_mounts
+
+    - name: Gather virtual facts
+      setup:
+        gather_subset: '!all,!min,virtual'
+        filter: '{{ item }}'
+      when: hostvars[inventory_hostname][item] is not defined
+      loop:
+        - ansible_virtualization_type
+
+    - name: Set custom facts
+      set_fact:
+        cacheable: true
+        '{{ item.name }}': '{{ item.value }}'
+      when: hostvars[inventory_hostname][item.name] is not defined
+      loop:
+        - name: openio_bind_address
+          value: "{{ openio_bind_address | d(default_openio_bind_address) }}"
+        - name: openio_bind_mgmt_interface
+          value: "{{ openio_bind_mgmt_interface | d(openio_bind_interface) }}"
+        - name: openio_bind_mgmt_address
+          value: "{{ openio_bind_mgmt_address | d(openio_bind_address) }}"
+
 - name: Checks
   import_playbook: playbooks/checks.yml
   tags:

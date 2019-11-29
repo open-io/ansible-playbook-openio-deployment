@@ -1,13 +1,26 @@
 #!/usr/bin/python
 import re
+from six.moves import map
+
 
 class FilterModule(object):
     def filters(self):
         return {
             'dict_to_tempauth': self.dict_to_tempauth,
             'join_by': self.join_by,
-            'my_zk_conf_from_string': self.my_zk_conf_from_string
+            'my_zk_conf_from_string': self.my_zk_conf_from_string,
+            'mkpath': self.mkpath,
         }
+
+    def mkpath(self, fmt, mp, ns, service_id):
+        """
+        Create volume path using the provided format
+        Format supports:
+        - mp: mountpoint
+        - ns: namespace
+        - id: service id
+        """
+        return fmt.format(mp=mp, ns=ns, id=service_id)
 
     def dict_to_tempauth(self, users):
         usr = dict()
@@ -21,7 +34,7 @@ class FilterModule(object):
     def join_by(self, mylist=[], group_by=3, D=',', d=';'):
         list_grouped_by_comma=[]
         if len(mylist) % group_by == 0:
-            for i in range(len(mylist) / group_by):
+            for i in range(int(len(mylist) / group_by)):
                 list_grouped_by_comma.append(D.join(map(str, mylist[(i * group_by):(i * group_by + group_by)])))
 
         return d.join(map(str, list_grouped_by_comma))

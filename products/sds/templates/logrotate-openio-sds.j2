@@ -4,9 +4,11 @@
   nodateext
   missingok
   notifempty
-  daily
+  {% if default_openio_log_rotate_hourly %}hourly{% else %}daily{% endif %}
+
   maxsize 50M
-  rotate 5
+  rotate {{ default_openio_log_retention_days | int *
+    (24 if default_openio_log_rotate_hourly else 1) }}
   compress
   delaycompress
   sharedscripts
@@ -20,9 +22,11 @@
   nodateext
   missingok
   notifempty
-  daily
+  {% if default_openio_log_rotate_hourly %}hourly{% else %}daily{% endif %}
+
   maxsize 100M
-  rotate 5
+  rotate {{ openio_log_retention_days | d(default_openio_log_retention_days) | int *
+    (24 if default_openio_log_rotate_hourly else 1) }}
   compress
   delaycompress
   sharedscripts

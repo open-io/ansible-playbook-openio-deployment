@@ -2,24 +2,17 @@
 - name: BASE - Basic requirements to install
   hosts: openio
   become: true
-  any_errors_fatal: true
+  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
   environment: "{{ default_openio_environment }}"
   vars_files:
     - ../vars/sds.yml
 
   pre_tasks:
-    - name: Gathering needed facts
-      setup:
-        gather_subset: min
-        filter: "{{ item }}"
-      with_items:
-        - ansible_distribution
-        - ansible_os_family
-        - ansible_system
-        - ansible_lsb
-        - ansible_distribution_release
-        - ansible_distribution_version
-        - ansible_distribution_major_version
+    - name: Define installation of oioswift extended
+      set_fact:
+        oioswift_extended: "{{ true \
+          if openio_repositories_credentials is defined and openio_repositories_credentials.get('oioswiftext') \
+          else false }}"
 
   roles:
     - role: users
@@ -42,6 +35,7 @@
       openio_repository_products:
         sds:
           release: "{{ openio_sds_release | d(default_openio_sds_release) }}"
+      tags: install
 
     - role: repositories
       openio_repository_mirror_host: "{{ default_openio_mirror }}"
@@ -55,6 +49,7 @@
       when:
         - groups.replicator is defined
         - groups.replicator | length >= 1  | default(false)
+      tags: install
 
     - role: repositories
       openio_repository_mirror_host: "{{ default_openio_mirror }}"
@@ -64,16 +59,32 @@
         sds:
           release: "unstable"
       when: openio_unstable_repo | default(default_openio_unstable_repo)
+      tags: install
+
+    - role: repositories
+      openio_repository_manage_openstack_repository: false
+      openio_repository_manage_epel_repository: false
+      openio_repository_mirror_host: "{{ default_openio_mirror }}"
+      openio_repository_no_log: "{{ default_openio_no_log }}"
+      openio_repository_products:
+        oioswiftext:
+          release: "{{ openio_sds_release | d(default_openio_sds_release) }}"
+          user: "{{ openio_repositories_credentials.oioswiftext.user }}"
+          password: "{{ openio_repositories_credentials.oioswiftext.password }}"
+      when: oioswift_extended
+      tags: install
 
     - role: ntp
       when: default_ntp_enabled
 
     - role: gridinit
       openio_gridinit_conf_location: "/etc/gridinit.d/{*,*/*}"
+      openio_gridinit_enabled: "{{ default_openio_services_systemd_enabled }}"
       ignore_errors: "{{ ansible_check_mode }}"
 
   tasks:
     - name: Install iproute
       package:
         name: "{{ 'iproute' if ansible_os_family == 'RedHat' else 'iproute2' }}"
+      tags: install
 ...

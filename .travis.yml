@@ -2,21 +2,21 @@
 dist: xenial
 sudo: required
 
+language: python
+python:
+  - "3.6"
+
 env:
   global:
     - ANSIBLE_VERSION=2.5
-    - SDS_RELEASE=19.04
+    - SDS_RELEASE=19.10
   matrix:
     - DISTRIBUTION: centos
       VERSION: 7
 #    - DISTRIBUTION: centos
 #      VERSION: 8
     - DISTRIBUTION: ubuntu
-      VERSION: 16.04
-    - DISTRIBUTION: ubuntu
       VERSION: 18.04
-#    - DISTRIBUTION: debian
-#      VERSION: 9
 
 services:
   - docker
@@ -33,17 +33,15 @@ before_install:
   #- git worktree add docker-tests origin/docker-tests
   # retrieve centralized script
   - |
-    for i in docker-tests.sh functional-tests.sh ansible.cfg; do
+    for i in docker-tests.sh functional-tests.sh; do
       wget -O docker-tests/${i} https://raw.githubusercontent.com/open-io/ansible-role-openio-skeleton/docker-tests/${i}
     done
   # Lint
-  - virtualenv venv
-  - . venv/bin/activate
-  - pip install --upgrade pip
+  # - python3 -m venv openio_venv
+  # - . openio_venv/bin/activate
+  # - pip install --upgrade pip
   - pip install -r ansible.pip
   - pip install yamllint
-  # netaddr
-  - pip install netaddr
 
   - ./docker-tests/docker-tests.sh && export TRINODE_ID1=$(docker ps -qa | head -n 1)
   - ./docker-tests/docker-tests.sh && export TRINODE_ID2=$(docker ps -qa | head -n 1)
@@ -82,7 +80,7 @@ script:
   # Run functional tests on the container
   - |
     for i in 2 3 33; do 
-      echo '----------' 172.17.0.$i '----------'
+      echo '----------' 172.17.0. $i '----------'
       SUT_IP=172.17.0.$i ./docker-tests/functional-tests.sh
     done
 

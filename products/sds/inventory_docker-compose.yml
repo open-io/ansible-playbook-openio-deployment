@@ -2,7 +2,7 @@
 all:
   hosts:
     node1:
-      ansible_host: IP_ADDRESS_OF_NODE1
+      ansible_host: node1
       openio_data_mounts:
         - mountpoint: /mnt/data1
           partition: /dev/vdb
@@ -13,7 +13,7 @@ all:
           partition: /dev/vdd
           meta2_count: 2
     node2:
-      ansible_host: IP_ADDRESS_OF_NODE2
+      ansible_host: node2
       openio_data_mounts:
         - mountpoint: /mnt/data1
           partition: /dev/vdb
@@ -24,7 +24,7 @@ all:
           partition: /dev/vdd
           meta2_count: 2
     node3:
-      ansible_host: IP_ADDRESS_OF_NODE3
+      ansible_host: node3
       openio_data_mounts:
         - mountpoint: /mnt/data1
           partition: /dev/vdb
@@ -36,12 +36,23 @@ all:
           meta2_count: 2
   vars:
     ansible_user: root
+    ansible_connection: docker
     #ansible_user: ubuntu
     #ansible_user: centos
 
     # Disable check of mountpoint matching
     openio_checks_filter:
       mountpoint: false
+
+    # use less memory
+    openio_account_workers: 1
+    openio_oioswift_workers: 1
+    namespace_meta1_digits: "1"
+    openio_event_agent_workers: 1
+    openio_zookeeper_parallel_gc_threads: 1
+    openio_zookeeper_memory: "256M"
+    openio_minimal_score_for_volume_admin_bootstrap: 5
+    openio_minimal_score_for_directory_bootstrap: 5
 
   children:
     openio:

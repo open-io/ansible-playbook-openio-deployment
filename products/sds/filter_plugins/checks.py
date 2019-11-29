@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+import six
 
 class FilterModule(object):
     def filters(self):
@@ -20,7 +20,7 @@ class FilterModule(object):
         """
         type_ = 'user' if mode == 1 else 'group'
         id_name = 'UID' if mode == 1 else 'GID'
-        for k, v in getent.iteritems():
+        for k, v in six.iteritems(getent):
             if k == entity and int(v[mode]) != int(id_):
                 raise Exception(
                     "%s '%s' already exists under a different %s: %d" %
