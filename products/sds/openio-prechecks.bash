@@ -43,6 +43,7 @@ RED="\e[31m"
 GREEN="\e[32m"
 YELLOW="\e[33m"
 BLUE="\e[34m"
+MAGENTA="\e[35m"
 NC="\e[39m"
 
 #
@@ -69,6 +70,8 @@ function my_exit {
     else
       if [ $ret -eq 0 ]; then
         ret="${GREEN}OK${NC}" # OK
+      elif [ $ret -eq 2 ]; then
+        ret="${MAGENTA}WARN${NC}" # WARN
       else
         ret="${RED}KO${NC}"   # KO
         overall=1             # set overall return value
@@ -104,6 +107,11 @@ trap 'my_exit' EXIT
 # <label> is the label of the command (defaults to <command>)
 # <stop> whether to stop the script on failure (defaults to continue)
 #
+# The command to run must return the following values:
+# - 0 on success
+# - 1 on error
+# - 2 on warning (it will be considered as a success anyway)
+#
 function run {
 
   local cmd="$1"
@@ -130,6 +138,8 @@ function run {
   echo -ne "${YELLOW}Result: ${NC}"
   if [ $ret -eq 0 ]; then
     echo -e "${GREEN}OK${NC}"
+  elif [ $ret -eq 2 ]; then
+    echo -e "${MAGENTA}WARN${NC}"
   else
     echo -e "${RED}KO${NC}"
   fi
@@ -205,7 +215,7 @@ function check_jumbo {
   if [ -n "$interfaces" ]; then
     echo -n "Interfaces with MTU < 9000: "
     echo $interfaces | sed 's/://g'
-    return 1
+    return 2
   fi
   return 0
 }
@@ -239,8 +249,8 @@ if [ $_OS = "CENTOS" ]; then
   run '[ -x /usr/sbin/getenforce -a "$(/usr/sbin/getenforce)" = "Disabled" ]' "SELinux is disabled"
   run 'systemctl is-active firewalld; [[ $? -ne 0 ]]' 'firewalld is active'
   run 'systemctl is-enabled firewalld; [[ $? -ne 0 ]]' 'firewalld is disabled'
-  run 'systemctl is-active sshd' 'OpenSSH Server is active'
-  run 'systemctl is-enabled sshd' 'OpenSSH Server is enabled'
+  run 'systemctl is-active sshd; [[ $? -eq 0 ]]' 'OpenSSH Server is active'
+  run 'systemctl is-enabled sshd; [[ $? -eq 0 ]]' 'OpenSSH Server is enabled'
   run 'curl -qsI http://mirror.openio.io/pub/repo/openio/sds/current/centos/ | head -n1 | grep "200 OK"' 'OpenIO repository is reachable'
 fi
 
@@ -249,8 +259,8 @@ if [ $_OS = "UBUNTU" ]; then
   run 'systemctl is-enabled apparmor; [[ $? -ne 0 ]]' 'apparmor is disabled'
   run 'systemctl is-active ufw; [[ $? -ne 0 ]]' 'ufw is not running'
   run 'systemctl is-enabled ufw; [[ $? -ne 0 ]]' 'ufw is disabled'
-  run 'systemctl is-active ssh' 'OpenSSH Server is active'
-  run 'systemctl is-enabled ssh' 'OpenSSH Server is enabled'
+  run 'systemctl is-active ssh; [[ $? -eq 0 ]]' 'OpenSSH Server is active'
+  run 'systemctl is-enabled ssh; [[ $? -eq 0 ]]' 'OpenSSH Server is enabled'
   run 'curl -qsI http://mirror.openio.io/pub/repo/openio/sds/current/Ubuntu/ | head -n1 | grep "200 OK"' 'OpenIO repository is reachable'
 fi
 
