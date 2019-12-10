@@ -23,7 +23,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-# 
+#
 # Ensure script is run from bash and not from another shell
 #
 if [ "$_" != "$0" -a "$_" != "/bin/bash" ]; then
@@ -69,7 +69,7 @@ function my_exit {
     else
       if [ $ret -eq 0 ]; then
         ret="${GREEN}OK${NC}" # OK
-      else 
+      else
         ret="${RED}KO${NC}"   # KO
         overall=1             # set overall return value
       fi
@@ -130,7 +130,7 @@ function run {
   echo -ne "${YELLOW}Result: ${NC}"
   if [ $ret -eq 0 ]; then
     echo -e "${GREEN}OK${NC}"
-  else 
+  else
     echo -e "${RED}KO${NC}"
   fi
   echo "--"
@@ -182,6 +182,35 @@ function check_os {
 }
 
 #
+# check_cpu_governor
+#
+#
+function check_cpu_governor {
+  if compgen -G /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null 2>&1; then
+    grep -v -e performance /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null|cut -d"/" -f6|paste -sd" "
+    [[ ${PIPESTATUS[0]} -eq 0 ]] && return 1
+  else
+    echo "cpufreq not installed."
+    return 1
+  fi
+  return 0
+}
+
+#
+# check_mtu
+#
+#
+function check_jumbo {
+  interfaces=$(ip link list | awk '/^[0-9]+:.* mtu/{if($5 < 9000) { print $2 }}')
+  if [ -n "$interfaces" ]; then
+    echo -n "Interfaces with MTU < 9000: "
+    echo $interfaces | sed 's/://g'
+    return 1
+  fi
+  return 0
+}
+
+#
 # chek_kernel >= 3.10
 #
 KERNEL_MIN_VERSION=3.10
@@ -195,7 +224,7 @@ function check_kernel {
   #return $?
 }
 
-# 
+#
 # Main checks
 #
 
@@ -205,7 +234,7 @@ run 'id; [[ $(id -u) -eq 0 ]]' "Run as root"
 run "python --version 2>&1 | grep '^Python \(3\|2\.7\)\.'" "Python exists"
 run 'getent passwd 120; [[ $? -ne 0 ]]' "uid 120 is available"
 run 'getent group 220; [[ $? -ne 0 ]]' "gid 220 is available"
-run "[[ $(df | grep '% /$' | awk '{print $2}') -gt 10e6 ]]" "Enough space on root partition"
+run "[[ $(df | grep '% /$' | awk '{print $2}') -gt 10**6 ]]" "Enough space on root partition"
 if [ $_OS = "CENTOS" ]; then
   run '[ -x /usr/sbin/getenforce -a "$(/usr/sbin/getenforce)" = "Disabled" ]' "SELinux is disabled"
   run 'systemctl is-active firewalld; [[ $? -ne 0 ]]' 'firewalld is active'
@@ -225,5 +254,8 @@ if [ $_OS = "UBUNTU" ]; then
   run 'curl -qsI http://mirror.openio.io/pub/repo/openio/sds/current/Ubuntu/ | head -n1 | grep "200 OK"' 'OpenIO repository is reachable'
 fi
 
-
 run 'check_kernel' "Kernel >= $KERNEL_MIN_VERSION"
+
+group "Hardware checks"
+run 'check_cpu_governor' 'CPU scaling governor set to performance'
+run 'check_jumbo' 'Network devices Jumbo Frames MTU'
