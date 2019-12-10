@@ -221,6 +221,17 @@ function check_jumbo {
 }
 
 #
+# check_intel_pstate
+#
+#
+function check_intel_pstate {
+  if [ -r /sys/devices/system/cpu/intel_pstate/status ]; then
+    grep -q off /sys/devices/system/cpu/intel_pstate/status || return 2
+  fi
+  return 0
+}
+
+#
 # chek_kernel >= 3.10
 #
 KERNEL_MIN_VERSION=3.10
@@ -267,5 +278,6 @@ fi
 run 'check_kernel' "Kernel >= $KERNEL_MIN_VERSION"
 
 group "Hardware checks"
+run 'check_intel_pstate' 'Intel P-state is better off'
 run 'check_cpu_governor' 'CPU scaling governor set to performance'
 run 'check_jumbo' 'Network devices Jumbo Frames MTU'
