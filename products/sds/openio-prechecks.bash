@@ -205,6 +205,7 @@ run 'id; [[ $(id -u) -eq 0 ]]' "Run as root"
 run "python --version 2>&1 | grep '^Python \(3\|2\.7\)\.'" "Python exists"
 run 'getent passwd 120; [[ $? -ne 0 ]]' "uid 120 is available"
 run 'getent group 220; [[ $? -ne 0 ]]' "gid 220 is available"
+run "[[ $(df | grep '% /$' | awk '{print $2}') -gt 10e6 ]]" "Enough space on root partition"
 if [ $_OS = "CENTOS" ]; then
   run '[ -x /usr/sbin/getenforce -a "$(/usr/sbin/getenforce)" = "Disabled" ]' "SELinux is disabled"
   run 'systemctl is-active firewalld; [[ $? -ne 0 ]]' 'firewalld is active'
