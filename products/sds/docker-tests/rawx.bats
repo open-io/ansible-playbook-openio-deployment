@@ -1,4 +1,4 @@
-#! /usr/bin/env bats
+#!/usr/bin/env bats
 
 @test 'rawx - status' {
   run curl -s ${SUT_IP}:6200/stat

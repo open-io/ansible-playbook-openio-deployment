@@ -131,6 +131,17 @@
       ignore_errors: "{{ ansible_check_mode }}"
       tags: configure
 
+    - name: "Install of {{ pkg }}"
+      package:
+        name: "{{ pkg }}"
+      register: install_package
+      until: install_package is success
+      retries: 5
+      delay: 2
+      tags: install
+      vars:
+        pkg: "{{ 'util-linux' if ansible_os_family == 'RedHat' else 'bsdmainutils' }}"
+
     - name: Add script for tests in /usr/bin/openio-basic-checks
       template:
         src: "{{ playbook_dir ~ '/../templates/openio-basic-checks.j2' }}"

@@ -26,12 +26,7 @@ default_openio_sds_version: latest
 default_openio_swift_version: latest
 default_openio_swift_swift3_version: latest
 
-#default_openio_monitoring: false
-#default_openio_billing: false
-#default_openio_grid: false
-#default_openio_elk: false
-
-default_openio_maintenance_mode: true
+default_openio_maintenance_mode: "{{ openio_maintenance_mode | d(true) | bool }}"
 
 default_openio_sysctl_managed: true
 default_openio_sysctl_entries:
@@ -51,17 +46,14 @@ default_openio_distribution_supported:
   - 'CentOS'
   - 'Fedora'
   - 'Ubuntu'
-  #- 'Raspbian'
 
 default_openio_release_supported:
-  - "testing"
-  - '18.04'
-  - '18.10'
   - '19.04'
   - '19.10'
 
 default_openio_checks_filter:
-  apparmor: "{{ false if openio_checks_filter is not defined else openio_checks_filter.apparmor | d(false) }}"
+  selinux: "{{ true if openio_checks_filter is not defined else openio_checks_filter.selinux | d(true) }}"
+  apparmor: "{{ true if openio_checks_filter is not defined else openio_checks_filter.apparmor | d(true) }}"
   zookeeper_memory: "{{ true if openio_checks_filter is not defined else openio_checks_filter.zookeeper_memory | d(true) }}"
   reachability: "{{ false if openio_checks_filter is not defined else openio_checks_filter.reachability | d(false) }}"
   mountpoint: "{{ true if openio_checks_filter is not defined else openio_checks_filter.mountpoint | d(true) }}"
@@ -89,8 +81,8 @@ default_ntp_enabled: "{{ ntp_enabled | d(true) }}"
 
 default_openio_redis_server_bind_port: "{{ openio_redis_server_bind_port | d(6011) | int }}"
 default_openio_redis_sentinel_bind_port: "{{ openio_redis_sentinel_bind_port | d(6012) | int }}"
-default_openio_rdir_global_bind_port: 6300
-default_openio_rawx_global_bind_port: 6200
+default_openio_rdir_global_bind_port: "{{ openio_rdir_global_bind_port | d(6300) | int }}"
+default_openio_rawx_global_bind_port: "{{ openio_rawx_global_bind_port | d(6200) | int }}"
 default_openio_meta0_global_bind_port: "{{ openio_meta0_global_bind_port | d(6001) | int }}"
 default_openio_meta1_global_bind_port: "{{ openio_meta1_global_bind_port | d(6110) | int }}"
 default_openio_meta2_global_bind_port: "{{ openio_meta2_global_bind_port | d(6120) | int }}"
@@ -100,15 +92,10 @@ default_openio_beanstalkd_global_bind_port: 6014
 default_openio_conscience_global_bind_port: 6000
 default_openio_ecd_global_bind_port: 6017
 default_openio_galera_global_bind_port: 3306
-default_openio_keystone_public_bind_port: 5000
-default_openio_keystone_admin_bind_port: 35357
 default_openio_memcached_global_bind_port: 6019
 default_openio_oioproxy_global_bind_port: 6006
 default_openio_oioswift_global_bind_port: 6007
 default_openio_redis_global_bind_port: 6011
 default_openio_redissentinel_global_bind_port: 6012
-default_openio_zookeeper_global_bind_port: 6005
-
-# default_openio_replicator_global_bind_port: 6015
-# default_openio_replicator_admin_bind_port: 6018
+default_openio_zookeeper_global_bind_port: "{{ openio_zookeeper_global_bind_port | d(6005) | int }}"
 ...

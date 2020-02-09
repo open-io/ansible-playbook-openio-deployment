@@ -2,7 +2,7 @@
 # SDS
 - name: gridinit
   src: https://github.com/open-io/ansible-role-gridinit.git
-  version: c58ace07616a7fb81dbbc193a2af8fafd8413e6e
+  version: 56956f8586f74dbfc09a664119c9d7c28a63d618
 - name: account
   src: https://github.com/open-io/ansible-role-openio-account.git
   version: 2ceef8407d0fb46fe3e39c4058269e92c17fc04b
@@ -18,18 +18,6 @@
 - name: ecd
   src: https://github.com/open-io/ansible-role-openio-ecd.git
   version: 3c7cbb16919153b2b54cdccca815da22aa879b5d
-- name: galera
-  src: https://github.com/open-io/ansible-role-openio-galera.git
-  version: 9dfeac93aa46c788b28151d5d054c2b0a7d2303f
-- name: haproxy
-  src: https://github.com/open-io/ansible-role-openio-haproxy.git
-  version: 5bb726c0ebb15705bdf59140ef8d82bd74156d79
-- name: keepalived
-  src: https://github.com/open-io/ansible-role-openio-keepalived.git
-  version: 79801d8012dcec4749648c3396aa25b9eac233c0
-- name: keystone
-  src: https://github.com/open-io/ansible-role-openio-keystone.git
-  version: df0a35140b7f5e7c1314cdcb86970beb93e5f7e9
 - name: memcached
   src: https://github.com/open-io/ansible-role-openio-memcached.git
   version: 5764a4fedd187d1a6ba586c3cf84ea57a41df820
@@ -38,13 +26,13 @@
   version: 57fa7eba4396aa4ed0b88bc3265ccfc409f0a52d
 - name: namespace
   src: https://github.com/open-io/ansible-role-openio-namespace.git
-  version: db9ce12b02db644c93cf8cea9d78ee49d1929bf8
+  version: 9a695589ed5635b045a9d9b6422af5c4bc6d5eb5
 - name: ntp
   src: https://github.com/open-io/ansible-role-openio-ntp.git
   version: 9028ec9fed76f8cee63926967b3882ed878b108f
 - name: oio-blob-indexer
   src: https://github.com/open-io/ansible-role-openio-oio-blob-indexer.git
-  version: 4bb12ec92864e937f96dc74680c16c0fd261c3a8
+  version: 538fffe3a64f0dcc1ea6c2cc4181fec7fea42916
 - name: oio-blob-rebuilder
   src: https://github.com/open-io/ansible-role-openio-oio-blob-rebuilder.git
   version: 565cba4a74ef697ff92d9140f83c8785c75e7e21
@@ -56,34 +44,31 @@
   version: e4f7204294535a83d4de872bf39e8e93dc23ee92
 - name: oioproxy
   src: https://github.com/open-io/ansible-role-openio-oioproxy.git
-  version: dfdaf037580fbcc8f558b965580a4494b1a29ac6
+  version: 58627a98733d413818a014f2097c36b6f1c78cb5
 - name: oioswift
   src: https://github.com/open-io/ansible-role-openio-oioswift.git
-  version: a5c65ff67dd16ceb939a99e8760fd0a8ecfe9b1a
+  version: c928f7bf62d31238b13d4f5c9ecc71ccc1d945d4
 - name: rawx
   src: https://github.com/open-io/ansible-role-openio-rawx.git
-  version: 389b3ac99b8fa39d3dfd8c42a6e4bab512581033
+  version: 05208ad2fedcbd1e1ed22b1c883e6157be130e59
 - name: rdir
   src: https://github.com/open-io/ansible-role-openio-rdir.git
-  version: d5cb654f62878e8fdfbc8346ba5e512094641833
+  version: 271f27f2cc6f52604f428c552476cd209c2c2cc7
 - name: redis
   src: https://github.com/open-io/ansible-role-openio-redis.git
-  version: c6b47f6aec8836122930a2700e497316861a3eab
-- name: replicator
-  src: https://github.com/open-io/ansible-role-openio-replicator.git
-  version: 0ca0e1c08e886e9e7176bd451753418f935ac88e
+  version: 2e82665154d2d04f58434f7ff684d59f01a46188
 - name: repositories
   src: https://github.com/open-io/ansible-role-openio-repository.git
-  version: 469434a5c539ee0a81fe3d93be5690dca03fd1b0
+  version: 550c550d45c94d40bddcc12047f0f007bc3a3848
 - name: users
   src: https://github.com/open-io/ansible-role-openio-users.git
-  version: 6962dddfeb016d808ae9901017c1cb6896df125c
+  version: 4be2720b36adb3a2386ba04e188bbdf05d46a090
 - name: xcute
   src: https://github.com/open-io/ansible-role-openio-xcute.git
-  version: 4adf72dda83b4ac06cacfe2ce5624e1eec16bed5
+  version: b78ae44475cbe3579935c583675f48dd9d5321de
 - name: zookeeper
   src: https://github.com/open-io/ansible-role-openio-zookeeper.git
-  version: 254355f8c587b83f37db2ec7a0dc1e644b2fc225
+  version: f2a508d9178a39b4376043dce9a7a7bcc6e5c299
 
 # OIOFS
 - name: oiofs

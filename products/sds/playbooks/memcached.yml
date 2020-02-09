@@ -1,0 +1,16 @@
+---
+- name: Memcached - Install and configure Memcached
+  any_errors_fatal: true
+  hosts: "{{ 'memcached' if groups.memcached is defined else ['oioswift', 'keystone'] }}"
+  become: true
+  environment: "{{ default_openio_environment }}"
+  vars_files:
+    - ../vars/sds.yml
+
+  roles:
+    - role: memcached
+      openio_memcached_namespace: "{{ namespace | d(default_namespace) }}"
+      openio_memcached_gridinit_dir: "/etc/gridinit.d/"
+      openio_memcached_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
+      openio_memcached_provision_only: "{{ default_openio_maintenance_mode }}"
+...
