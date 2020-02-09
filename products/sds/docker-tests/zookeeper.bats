@@ -1,4 +1,4 @@
-#! /usr/bin/env bats
+#!/usr/bin/env bats
 
 @test 'zookeeper - status' {
   run bash -c "echo mntr |curl telnet://${SUT_IP}:6005"

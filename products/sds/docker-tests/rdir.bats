@@ -1,4 +1,4 @@
-#! /usr/bin/env bats
+#!/usr/bin/env bats
 
 @test 'rdir - up' {
   run nc -zv ${SUT_IP} 6300

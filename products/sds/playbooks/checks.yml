@@ -12,6 +12,7 @@
         that:
           - ansible_version.full is version_compare('2.5.0', '>=')
           - ansible_version.full is version_compare('2.10.0', '<')
+        fail_msg: "Your release of ansible is not supported, please refer to the file 'ansible.pip'"
       check_mode: false
 
     - name: Check number of zookeeper hosts
@@ -19,6 +20,7 @@
         that:
           - groups.zookeeper is defined
           - groups.zookeeper | length is divisibleby 3
+        fail_msg: "The number of nodes in group zookeeper must be divisible by 3"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
       check_mode: false
 
@@ -27,6 +29,7 @@
         that:
           - groups.meta0 is defined
           - groups.meta0 | length >= 3
+        fail_msg: "At least 3 nodes are required in the group meta0"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
       check_mode: false
 
@@ -36,18 +39,10 @@
       register: _test_netaddr
       ignore_errors: true
 
-    - name: install python-netaddr
-      become: true
-      package:
-        name: python-netaddr
-      register: _install_netaddr
-      when:
-        - _test_netaddr is failed
-        - default_openio_manage_os_requirement
-
     - name: Check Python-netaddr is available
       assert:
-        that: _test_netaddr is success or _install_netaddr is success and _install_netaddr is not skipped
+        that: _test_netaddr is success
+        fail_msg: "python3-netaddr is required on your local node, please refer to the file 'ansible.pip'"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
       check_mode: false
 
@@ -63,6 +58,7 @@
         that:
           - _test_metadata is iterable
           - _test_metadata is not string
+        fail_msg: "The variable openio_metadata_mounts is mandatory for nodes in the meta group"
       check_mode: false
 
 - name: Preflight - Check hosts
@@ -78,6 +74,7 @@
     - name: SDS release not match
       assert:
         that: openio_sds_release | d(default_openio_sds_release) in default_openio_release_supported
+        fail_msg: "The openio sds release you defined is not supported, you should fix the openio_sds_release"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
       check_mode: false
 
@@ -86,13 +83,9 @@
         that:
           - groups.meta0 is defined
           - groups.meta0 | length >= 3
+        fail_msg: "The number of nodes in group meta0 must be greater than 3 if namespace_storage_policy is THREEECOPIES"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
       when: namespace_storage_policy | d(default_namespace_storage_policy) == "THREECOPIES"
-
-    - name: Install python
-      raw: "test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)"
-      changed_when: false
-      check_mode: false
 
     - name: Check common variables are defined
       fail:
@@ -149,8 +142,8 @@
 
     - name: openio_haproxy_password is undefined
       assert:
-        that:
-          - openio_haproxy_password is defined
+        that: openio_haproxy_password is defined
+        fail_msg: "openio_haproxy_password is required when you define the group haproxy"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
       when:
         - groups.haproxy is defined
@@ -183,6 +176,7 @@
       assert:
         that:
           - request.status != -1
+        fail_msg: "{{ openio_mirror | d(default_openio_mirror) }} is not reachable, maybe you need to use a proxy, see the openio_environment variable."
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
       check_mode: false
 
@@ -194,6 +188,7 @@
             groups['openio'] | map('extract', hostvars, ['ansible_hostname']) | list | count
             ==
             groups['openio'] | map('extract', hostvars, ['ansible_hostname']) | list | unique | count
+        fail_msg: "Host names must be unique, check the result of: 'ansible openio -i inventory.yml -m setup -a filter=ansible_hostname'"
       delegate_to: localhost
       run_once: true
       when: default_openio_checks_filter.hostname_unique
@@ -206,11 +201,13 @@
     - name: Stop if UID is already used for an account which is not 'openio'
       assert:
         that: getent_passwd | check_uid('openio', default_openio_user_openio_uid)
+        fail_msg: "The default uid for the user openio is not available, please set a correct uid with openio_user_openio_uid"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
 
     - name: Stop if GID is already used for an account which is not 'openio'
       assert:
         that: getent_passwd | check_gid('openio', default_openio_group_openio_gid)
+        fail_msg: "The default gid for the group openio is not available, please set a correct gid with openio_user_openio_gid"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
 
     - name: Get running process
@@ -228,32 +225,37 @@
     - name: Check max open files
       assert:
         that: _openfiles.stdout | int >= default_openio_limits_openfiles_min | int
+        fail_msg: "You have to increase the file descriptor limit"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
 
     - name: Check systemd
       assert:
         that: ansible_service_mgr == "systemd"
+        fail_msg: "A systemd-based distribution is mandatory for the deployment of openio SDS."
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
 
     - name: Check Operating System is supported
       assert:
         that: ansible_distribution in default_openio_distribution_supported
+        fail_msg: "This linux distribution is not supported"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
 
     - name: Check SELinux is disabled
       assert:
         that: ansible_selinux.status == 'disabled'
-        msg: SELinux must be disabled.
+        fail_msg: "SELinux must be disabled and python3-libselinux must be installed"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
       when:
+        - default_openio_checks_filter.selinux
         - ansible_os_family == 'RedHat'
 
     - name: Check AppArmor is disabled
       assert:
         that: ansible_apparmor.status == 'disabled'
-        msg: AppArmor must be disabled.
+        fail_msg: "AppArmor must be disabled"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
       when:
+        - default_openio_checks_filter.apparmor
         - ansible_os_family == 'Debian'
 
     - name: Stop and disable firewalld.
@@ -270,6 +272,7 @@
     - name: Check firewalld is disabled
       assert:
         that: "'firewalld' not in ps.stdout or _firewalld_disable | default(false) is success"
+        fail_msg: "The firewalld service must be disabled"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
 
     - name: Check memory for zookeeper
@@ -283,6 +286,7 @@
     - name: Check kernel version
       assert:
         that: ansible_kernel.split('-')[0] is version_compare('3.10', '>=')
+        fail_msg: "The running kernel version is too old"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
 
     - name: Check http_proxy environment variable
@@ -290,6 +294,7 @@
         that:
           - ansible_env.http_proxy is not defined or openio_environment.http_proxy is defined
           - ansible_env.https_proxy is not defined or openio_environment.https_proxy is defined
+        fail_msg: "You defined a proxy in /etc/environment but this definition is missing in the openio_environment"
       ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
 
     - name: Fill /etc/yum/vars/contentdir
@@ -312,9 +317,8 @@
 
         - name: Check mountpoints match block devices in host_vars
           assert:
-            that:
-              - df_partition == inventory_partition
-            msg: "Mounted partitions do not match those declared in the inventory."
+            that: df_partition == inventory_partition
+            fail_msg: "Mounted partitions do not match those declared in the inventory, please fix openio_data_mounts and openio_metadata_mounts accordingly"
           with_items: "{{ _df_mounts.results }}"
           loop_control:
             loop_var: df_result

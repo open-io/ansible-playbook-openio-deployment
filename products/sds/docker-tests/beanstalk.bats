@@ -1,4 +1,4 @@
-#! /usr/bin/env bats
+#!/usr/bin/env bats
 
 @test 'Beanstalkd - stats' {
   run bash -c "echo -e \"stats\r\nquit\r\n\" |curl telnet://${SUT_IP}:6014"

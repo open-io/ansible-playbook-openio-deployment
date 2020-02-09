@@ -169,12 +169,14 @@
     - role: nfs
       openio_nfs_exports: "{{ oiofs_mountpoints | mounts2nfs(oiofs_global_mount_directory) }}"
       openio_nfs_systemd_managed: "{{ default_openio_services_systemd_enabled }}"
+      openio_nfs_provision_only: "{{ default_openio_maintenance_mode }}"
       when: oiofs_mountpoints | mounts2nfs(oiofs_global_mount_directory)
 
     - role: samba
       openio_samba_mountpoints: "{{ oiofs_mountpoints | mounts2samba(oiofs_global_mount_directory) }}"
       openio_samba_service_state: started
       openio_samba_service_enabled: "{{ default_openio_services_systemd_enabled }}"
+      openio_samba_provision_only: "{{ default_openio_maintenance_mode }}"
       when: oiofs_mountpoints | mounts2samba(oiofs_global_mount_directory)
 
   tasks:

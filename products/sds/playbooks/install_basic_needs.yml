@@ -13,6 +13,9 @@
         oioswift_extended: "{{ true \
           if openio_repositories_credentials is defined and openio_repositories_credentials.get('oioswiftext') \
           else false }}"
+      tags:
+        - install
+        - configure
 
   roles:
     - role: users
@@ -52,12 +55,12 @@
       tags: install
 
     - role: repositories
-      openio_repository_mirror_host: "{{ default_openio_mirror }}"
+      openio_repository_mirror_host: "mirror2.openio.io"
       openio_repository_openstack_release: "{{ default_openio_openstack_distro }}"
       openio_repository_no_log: "{{ default_openio_no_log }}"
       openio_repository_products:
         sds:
-          release: "unstable"
+          release: "{{ openio_sds_release | d(default_openio_sds_release) }}/unstable"
       when: openio_unstable_repo | default(default_openio_unstable_repo)
       tags: install
 
@@ -80,6 +83,7 @@
     - role: gridinit
       openio_gridinit_conf_location: "/etc/gridinit.d/{*,*/*}"
       openio_gridinit_enabled: "{{ default_openio_services_systemd_enabled }}"
+      openio_gridinit_provision_only: "{{ default_openio_maintenance_mode }}"
       ignore_errors: "{{ ansible_check_mode }}"
 
   tasks:

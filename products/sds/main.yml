@@ -3,6 +3,7 @@
   hosts: openio:oiofs_ha:oiofs:admin
   any_errors_fatal: true
   max_fail_percentage: 0
+  gather_facts: false
   tags:
     - always
     - facts
@@ -11,6 +12,30 @@
     - vars/sds.yml
 
   tasks:
+    - name: Install python
+      raw: "test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)"
+      changed_when: false
+      check_mode: false
+      become: true
+
+    - name: Gather minimal facts
+      setup:
+        gather_subset: '!all,min'
+        filter: '{{ item }}'
+      when: hostvars[inventory_hostname][item] is not defined
+      loop:
+        - ansible_os_family
+        - ansible_hostname
+        - ansible_fqdn
+        - ansible_distribution
+        - ansible_distribution_release
+        - ansible_architecture
+        - ansible_system
+        - ansible_selinux
+        - ansible_service_mgr
+        - ansible_distribution_major_version
+        - ansible_distribution_version
+
     - name: Gather hardware facts
       setup:
         gather_subset: '!all,!min,hardware'
@@ -21,6 +46,23 @@
         - ansible_processor_vcpus
         - ansible_devices
         - ansible_mounts
+
+    - name: Gather static network facts
+      setup:
+        gather_subset: '!all,!min,network'
+        filter: '{{ item }}'
+      when: hostvars[inventory_hostname][item] is not defined
+      loop:
+        - ansible_default_ipv4
+        - ansible_all_ipv4_addresses
+
+    - name: Gather dynamic network facts
+      setup:
+        gather_subset: '!all,!min,network'
+        filter: '{{ item }}'
+      when: hostvars[inventory_hostname][item] is not defined
+      vars:
+        item: "{{ 'ansible_' ~ openio_bind_interface }}"
 
     - name: Gather virtual facts
       setup:
@@ -56,6 +98,12 @@
 - name: SDS
   import_playbook: playbooks/openiosds.yml
   tags: sds
+
+- name: Memcached
+  import_playbook: playbooks/memcached.yml
+  tags:
+    - memcached
+    - s3
 
 - name: Swift
   import_playbook: playbooks/oioswift.yml

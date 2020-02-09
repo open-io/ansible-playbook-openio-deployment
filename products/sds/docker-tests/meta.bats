@@ -1,4 +1,4 @@
-#! /usr/bin/env bats
+#!/usr/bin/env bats
 
 @test 'Meta0 - up' {
   run nc -zv ${SUT_IP} 6001

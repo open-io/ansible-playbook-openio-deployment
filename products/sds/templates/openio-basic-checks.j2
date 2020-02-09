@@ -130,8 +130,8 @@ export NO_PROXY={{ vip }}
 export OIO_NS={{ namespace }}
 
 group "OpenIO status"
-run "gridinit_cmd status -c" "Check the services" \
-&& run "openio cluster list" "Check the cluster"
+run "gridinit_cmd status -c" "Check the services"
+run "openio cluster list" "Check the cluster"
 
 [[ $? -ne 0 ]] && exit $? # Stop if the previous group failed
 

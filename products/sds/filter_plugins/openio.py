@@ -10,7 +10,15 @@ class FilterModule(object):
             'join_by': self.join_by,
             'my_zk_conf_from_string': self.my_zk_conf_from_string,
             'mkpath': self.mkpath,
+            'mkpaths': self.mkpaths,
         }
+
+    def mkpaths(self, fmt, ns, meta2):
+        """
+        Invoke mkpath on a meta2 list, returning the resulting formatted paths
+        """
+        return [self.mkpath(
+            fmt, svc['mountpoint'], ns, svc['id']) for svc in meta2]
 
     def mkpath(self, fmt, mp, ns, service_id):
         """

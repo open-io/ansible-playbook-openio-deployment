@@ -1,4 +1,4 @@
-#! /usr/bin/env bats
+#!/usr/bin/env bats
 
 # Doesn't work on ubuntu target ...
 #@test 'Redis - stats' {
