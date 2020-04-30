@@ -9,7 +9,7 @@ python:
 env:
   global:
     - ANSIBLE_VERSION=2.9
-    - SDS_RELEASE=19.10
+    - SDS_RELEASE=20.04
   jobs:
     - DISTRIBUTION: centos
       VERSION: 7

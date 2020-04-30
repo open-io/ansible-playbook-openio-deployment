@@ -1,9 +1,9 @@
 ---
 - name: Setup oiofs environment
   hosts: oiofs
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
     - ../vars/oiofs.yml
@@ -18,7 +18,7 @@
         that:
           - groups.ecd is defined
           - inventory_hostname in groups.ecd
-      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      ignore_errors: "{{ openio_ignore_assert_errors }}"
       tags: configure
 
     - name: no OIOPROXY defined for this node
@@ -26,7 +26,7 @@
         that:
           - groups.oioproxy is defined
           - inventory_hostname in groups.oioproxy
-      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      ignore_errors: "{{ openio_ignore_assert_errors }}"
       tags: configure
 
     - name: no credentials for the oiofs repository
@@ -36,7 +36,7 @@
           - openio_repositories_credentials.oiofs is defined
           - openio_repositories_credentials.oiofs.user is defined
           - openio_repositories_credentials.oiofs.password is defined
-      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      ignore_errors: "{{ openio_ignore_assert_errors }}"
       tags: configure
 
     - name: oiofs_cache_device or oiofs_cache_devices must be defined
@@ -44,7 +44,7 @@
         that: >
           oiofs_cache_device is defined
           or oiofs_cache_devices is defined
-      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      ignore_errors: "{{ openio_ignore_assert_errors }}"
       tags: configure
 
     - name: oiofs_cache_folder or oiofs_cache_folders must be defined
@@ -52,7 +52,7 @@
         that: >
           oiofs_cache_folder is defined
           or oiofs_cache_folders is defined
-      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      ignore_errors: "{{ openio_ignore_assert_errors }}"
       tags: configure
 
     - name: Cache device must a partition or a block device
@@ -60,7 +60,7 @@
         that: >
           oiofs_cache_device in (ansible_mounts | map(attribute='device') | list)
           or oiofs_cache_device.split('/')[-1] in ansible_devices
-      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      ignore_errors: "{{ openio_ignore_assert_errors }}"
       tags: configure
       when: oiofs_cache_device is defined
 
@@ -69,7 +69,7 @@
         that: >
           item in (ansible_mounts | map(attribute='device') | list)
           or item.split('/')[-1] in ansible_devices
-      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      ignore_errors: "{{ openio_ignore_assert_errors }}"
       tags: configure
       with_items: "{{ oiofs_cache_devices }}"
       when: oiofs_cache_devices is defined
@@ -78,7 +78,7 @@
       assert:
         that:
           - oiofs_cache_folder in ansible_mounts | selectattr('device', 'equalto', oiofs_cache_device) | map(attribute='mount') | list
-      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      ignore_errors: "{{ openio_ignore_assert_errors }}"
       tags: configure
       when: oiofs_cache_folder is defined
 
@@ -86,7 +86,7 @@
       assert:
         that:
           - item.0 in ansible_mounts | selectattr('device', 'equalto', item.1) | map(attribute='mount') | list
-      ignore_errors: "{{ openio_ignore_assert_errors | d(default_openio_ignore_assert_errors) }}"
+      ignore_errors: "{{ openio_ignore_assert_errors }}"
       tags: configure
       with_together:
         - "{{ oiofs_cache_folders }}"
@@ -95,9 +95,9 @@
 
 - name: Setup oiofs environment
   hosts: oiofs
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
     - ../vars/oiofs.yml
@@ -112,21 +112,19 @@
     - role: repositories
       openio_repository_manage_openstack_repository: false
       openio_repository_manage_epel_repository: false
-      openio_repository_mirror_host: "{{ default_openio_mirror }}"
-      openio_repository_no_log: "{{ default_openio_no_log }}"
       openio_repository_products:
         oiofs:
           user: "{{ openio_repositories_credentials.oiofs.user }}"
           password: "{{ openio_repositories_credentials.oiofs.password }}"
-          release: "{{ openio_sds_release | d(default_openio_sds_release) }}"
+          release: "{{ openio_sds_release }}"
 
     - role: users
 
 - name: Install and configure OIOFS
   hosts: oiofs
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
     - ../vars/oiofs.yml
@@ -155,9 +153,9 @@
 
 - name: Exports oiofs
   hosts: oiofs
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
     - ../vars/oiofs.yml
@@ -168,15 +166,15 @@
   roles:
     - role: nfs
       openio_nfs_exports: "{{ oiofs_mountpoints | mounts2nfs(oiofs_global_mount_directory) }}"
-      openio_nfs_systemd_managed: "{{ default_openio_services_systemd_enabled }}"
-      openio_nfs_provision_only: "{{ default_openio_maintenance_mode }}"
+      openio_nfs_systemd_managed: "{{ openio_services_systemd_enabled }}"
+      openio_nfs_provision_only: "{{ openio_maintenance_mode | bool }}"
       when: oiofs_mountpoints | mounts2nfs(oiofs_global_mount_directory)
 
     - role: samba
       openio_samba_mountpoints: "{{ oiofs_mountpoints | mounts2samba(oiofs_global_mount_directory) }}"
       openio_samba_service_state: started
-      openio_samba_service_enabled: "{{ default_openio_services_systemd_enabled }}"
-      openio_samba_provision_only: "{{ default_openio_maintenance_mode }}"
+      openio_samba_service_enabled: "{{ openio_services_systemd_enabled }}"
+      openio_samba_provision_only: "{{ openio_maintenance_mode | bool }}"
       when: oiofs_mountpoints | mounts2samba(oiofs_global_mount_directory)
 
   tasks:
@@ -185,7 +183,7 @@
         (pdbedit --user={{ samba_user }} 2>&1 > /dev/null) \
         || (echo {{ samba_user_password }}; echo {{ samba_user_password }}) \
         | smbpasswd -s -a {{ samba_user }}
-      no_log: "{{ default_openio_no_log }}"
+      no_log: "{{ openio_no_log }}"
       register: create_user_output
       changed_when: "'Added user' in create_user_output.stdout"
       run_once: true

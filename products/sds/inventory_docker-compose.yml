@@ -73,6 +73,17 @@ all:
             roles:
               - admin
 
+        # openio_oioswift_iam_policy:
+        #   'demo:demo':
+        #     Statement:
+        #       - Sid: FullAccess
+        #         Action:
+        #           - 's3:*'
+        #         Effect: Allow
+        #         Resource:
+        #           - '*'
+
+
         # Credentials for private features
         openio_repositories_credentials: {}
 

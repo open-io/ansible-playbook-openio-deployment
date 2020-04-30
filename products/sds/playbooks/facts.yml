@@ -1,0 +1,76 @@
+---
+- name: Caching facts
+  hosts: openio:oiofs
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  gather_facts: false
+  vars_files:
+    - ../vars/sds.yml
+    - ../settings.yml
+
+  tasks:
+    - include_tasks: tasks/gather_facts.yml
+      vars:
+        subset: min
+        facts:
+          - ansible_os_family
+          - ansible_nodename
+          - ansible_hostname
+          - ansible_fqdn
+          - ansible_distribution
+          - ansible_distribution_release
+          - ansible_architecture
+          - ansible_system
+          - ansible_selinux
+          - ansible_service_mgr
+          - ansible_distribution_major_version
+          - ansible_distribution_version
+
+    - include_tasks: tasks/gather_facts.yml
+      vars:
+        subset: hardware
+        facts:
+          - ansible_memtotal_mb
+          - ansible_processor_vcpus
+          - ansible_devices
+          - ansible_mounts
+
+    - include_tasks: tasks/gather_facts.yml
+      vars:
+        subset: virtual
+        facts:
+          - ansible_virtualization_type
+
+    - include_tasks: tasks/gather_facts.yml
+      vars:
+        subset: network
+        facts:
+          - "*"
+
+    #
+    # openio_xxx_global_bind_port variables were used before port variables reorganisation.
+    # This define the corresponding opneio_xxx_bind_port from openio_xxx_global_bind_port
+    # when the first is not set while the later is
+    #
+    - name: "[compat] openio_xxx_global_bind_port"
+      set_fact:
+        "{{ varname }}": "{{ lookup('vars', item) }}"
+      when: "lookup('vars', varname, default='') | string | length == 0"
+      vars:
+        varname: "{{ item | replace('_global_', '_') }}"
+      loop: "{{ query('varnames', '^openio_.+_global_bind_port$') }}"
+
+    #
+    # Set default variables
+    #
+    # for each variables named `default_xxx`, set the corresponding variable
+    # `xxx` from default value if not set yet or combine if it's a dict
+    #
+    # Use oio_default_variables action plugins from plugins/action/oio_default_variables.py
+    # to speedup the task
+    #
+    - name: Set OpenIO variables default values
+      oio_default_variables:
+        settings: 'settings'
+      changed_when: false
+...

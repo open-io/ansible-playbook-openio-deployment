@@ -54,7 +54,7 @@ function my_exit {
   echo
   echo ++++
   echo -e "${YELLOW} AWS S3 summary from (/root/.aws/credentials):$NC"
-  echo -e " $YELLOW endpoint:$NC http://{{ vip }}:6007"
+  echo -e " $YELLOW endpoint:$NC http://{{ vip }}:{{ openio_oioswift_bind_port }}"
   echo -e " $YELLOW region:$NC $(grep region /root/.aws/config | awk -F'=' '{print $2}')"
   echo -e " $YELLOW access key:$NC $(grep aws_access_key_id /root/.aws/credentials | awk -F'=' '{print $2}')"
   echo -e " $YELLOW secret key:$NC $(grep aws_secret_access_key /root/.aws/credentials | awk -F'=' '{print $2}')"
@@ -190,25 +190,25 @@ run \
 {% if groups.oioswift is defined and groups.oioswift|length  %}
 group "AWS API"
 run \
-  "aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 mb s3://mybucket" \
+  "aws --endpoint-url http://{{ vip }}:{{ openio_oioswift_bind_port }} --no-verify-ssl s3 mb s3://mybucket" \
   "Create a bucket 'mybucket'" \
 && run \
-  "aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 cp /etc/passwd s3://mybucket" \
+  "aws --endpoint-url http://{{ vip }}:{{ openio_oioswift_bind_port }} --no-verify-ssl s3 cp /etc/passwd s3://mybucket" \
   "Upload the '/etc/passwd' file to the bucket 'mybucket'" \
 && run \
-  "aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 ls s3://mybucket --recursive --human-readable --summarize" \
+  "aws --endpoint-url http://{{ vip }}:{{ openio_oioswift_bind_port }} --no-verify-ssl s3 ls s3://mybucket --recursive --human-readable --summarize" \
   "List your buckets" \
 && run \
-  "rm -f /tmp/passwd.aws ; aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 cp s3://mybucket/passwd /tmp/passwd.aws" \
+  "rm -f /tmp/passwd.aws ; aws --endpoint-url http://{{ vip }}:{{ openio_oioswift_bind_port }} --no-verify-ssl s3 cp s3://mybucket/passwd /tmp/passwd.aws" \
   "Save the data stored in the given object to the given file" \
 && run \
   "cmp /etc/passwd /tmp/passwd.aws && echo OK || echo FAILED" \
   "Compare local file against data from SDS" \
 && run \
-  "aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 rm s3://mybucket/passwd" \
+  "aws --endpoint-url http://{{ vip }}:{{ openio_oioswift_bind_port }} --no-verify-ssl s3 rm s3://mybucket/passwd" \
   "Delete your object" \
 && run \
-  "aws --endpoint-url http://{{ vip }}:6007 --no-verify-ssl s3 rb s3://mybucket" \
+  "aws --endpoint-url http://{{ vip }}:{{ openio_oioswift_bind_port }} --no-verify-ssl s3 rb s3://mybucket" \
   "Delete your empty bucket"
 
 [[ $? -ne 0 ]] && exit $? # Stop if the previous group failed

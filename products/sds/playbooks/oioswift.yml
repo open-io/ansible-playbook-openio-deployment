@@ -1,23 +1,19 @@
 ---
 - name: OpenIO Swift - Install and configure OpenIO Swift
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: oioswift
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
 
   roles:
     - role: oioswift
-      openio_oioswift_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_oioswift_version: "{{ openio_swift_version | d(default_openio_sds_version) }}"
-      openio_oioswift_swift3_version: "{{ openio_swift_swift3_version | d(default_openio_swift_swift3_version) }}"
-      openio_oioswift_sds_version: "{{ openio_sds_version | d(default_openio_sds_version) }}"
-      openio_oioswift_gridinit_dir: "/etc/gridinit.d/"
-      openio_oioswift_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
 
   tasks:
     # restart oioswift to register oioswift in conscience
     - name: "Restart of conscienceagent"
       command: gridinit_cmd restart @conscienceagent
+      when: not openio_maintenance_mode
+      tags: configure
 ...

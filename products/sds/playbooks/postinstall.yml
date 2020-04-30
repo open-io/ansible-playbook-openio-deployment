@@ -2,8 +2,8 @@
 - name: POSTINSTALL - Configure node for test
   hosts: oioswift
   become: true
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
-  environment: "{{ default_openio_environment }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
 
@@ -41,7 +41,11 @@
             OS_PROJECT_NAME: demo
             OS_USERNAME: demo
             OS_PASSWORD: "{{ openio_keystone_demo_password | d('DEMO_PASS') }}"
-            OS_AUTH_URL: "{{'http://' ~ openio_bind_virtual_address ~ ':5000' if openio_bind_virtual_address is defined else '' }}"
+            OS_AUTH_URL: >-
+              {% set url = "" -%}
+              {% if openio_bind_virtual_address is defined -%}{% set url = 'http://' ~ openio_bind_virtual_address ~ ':' ~ openio_keystone_public_bind_port -%}{% endif -%}
+              {% if openio_bind_virtual_address_fqdn is defined -%}{% set url = 'http://' ~ openio_bind_virtual_address_fqdn ~ ':' ~ openio_keystone_public_bind_port -%}{% endif -%}
+              {{ url }}
             OS_IDENTITY_API_VERSION: 3
             OS_IMAGE_API_VERSION: 2
           until: cred is success
@@ -49,7 +53,7 @@
           delay: 2
 
         - name: Register AWS creds
-          no_log: "{{ default_openio_no_log }}"
+          no_log: "{{ openio_no_log }}"
           ignore_errors: true
           register: aws_cred
           set_fact:
@@ -71,15 +75,15 @@
     - name: Get AWS credentials (Tempauth)
       block:
         - name: Get user
-          no_log: "{{ default_openio_no_log }}"
+          no_log: "{{ openio_no_log }}"
           set_fact:
             openio_oioswift_tempauth_user: "{{ openio_oioswift_filter_tempauth.keys() | select('match', 'user_.*') | list | first }}"
         - name: Get password of user
-          no_log: "{{ default_openio_no_log }}"
+          no_log: "{{ openio_no_log }}"
           set_fact:
             openio_oioswift_tempauth_pass: "{{ openio_oioswift_filter_tempauth[openio_oioswift_tempauth_user].split(' ')[0] }}"
         - name: register AWS creds (Tempauth)
-          no_log: "{{ default_openio_no_log }}"
+          no_log: "{{ openio_no_log }}"
           register: aws_cred
           set_fact:
             access: "{{ openio_oioswift_tempauth_user.split('_')[1:] | join(':') }}"
@@ -100,13 +104,23 @@
       tags: configure
 
     - name: Set aws credentials
-      no_log: "{{ default_openio_no_log }}"
+      no_log: "{{ openio_no_log }}"
       copy:
         dest: /root/.aws/credentials
         content: |
           [default]
           aws_access_key_id = {{ access }}
           aws_secret_access_key = {{ secret }}
+      ignore_errors: "{{ ansible_check_mode }}"
+      tags: configure
+
+    - name: Copy aws configuration file to openio home directory
+      copy:
+        src: /root/.aws
+        dest: /home/openio/
+        remote_src: true
+        owner: openio
+        group: openio
       ignore_errors: "{{ ansible_check_mode }}"
       tags: configure
 
@@ -124,10 +138,10 @@
                max_queue_size = 100
                #multipart_threshold = 50MB
                #multipart_chunksize = 10MB
-            region = {{ openio_s3_region | d(default_openio_s3_region) }}
+            region = {{ openio_s3_region }}
         - path: /etc/profile.d/openio.sh
           content: |
-            export OIO_NS={{ namespace | d(default_namespace) }}
+            export OIO_NS={{ namespace }}
       ignore_errors: "{{ ansible_check_mode }}"
       tags: configure
 

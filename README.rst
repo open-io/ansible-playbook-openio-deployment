@@ -1,4 +1,4 @@
-.. image:: https://travis-ci.org/open-io/ansible-playbook-openio-deployment.svg?branch=master
+.. image:: https://travis-ci.org/open-io/ansible-playbook-openio-deployment.svg?branch=20.04
     :target: https://travis-ci.org/open-io/ansible-playbook-openio-deployment
 
 Requirements
@@ -113,4 +113,4 @@ You only need to do this setup on the node that will install the others.
     sudo apt install git python-netaddr -y
 
 
-Now you can install `OpenIO SDS <https://github.com/open-io/ansible-playbook-openio-deployment/tree/19.04/products/sds>`__
+Now you can install `OpenIO SDS <https://github.com/open-io/ansible-playbook-openio-deployment/tree/20.04/products/sds>`__

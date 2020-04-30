@@ -21,6 +21,7 @@
     - python-kazoo
     - openio-sds-logrotate
     - openio-sds-rsyslog
+    - cron
   loop_control:
     loop_var: pkg
   ignore_errors: "{{ ansible_check_mode }}"

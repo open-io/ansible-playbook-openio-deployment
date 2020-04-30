@@ -1,0 +1,1004 @@
+---
+settings:
+
+#
+# Interfaces variables must be define first as others
+# would depend on them (FIFO style).
+#
+  - name: openio_bind_interface
+    variable: openio_bind_interface
+    default: '{{ ansible_default_ipv4.alias }}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: networking
+
+  - name: openio_bind_address
+    variable: openio_bind_address
+    default: '{{ ansible_default_ipv4.address }}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: networking
+
+  - name: openio_bind_mgmt_address
+    variable: openio_bind_mgmt_address
+    default: '{{ openio_bind_address }}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: monitoring
+
+  - name: Management network interface
+    variable: openio_bind_mgmt_interface
+    default: '{{ openio_bind_interface }}'
+    type: string
+    hidden: false
+    readonly: false
+    group: openio
+    section: monitoring
+
+#
+# General
+#
+
+## General.NTP
+  - name: Enabled
+    group: general
+    section: NTP
+    variable: ntp_enabled
+    type: boolean
+    default: true
+    readonly: true
+    hidden: false
+
+  - name: ntp_area
+    group: general
+    section: NTP
+    variable: ntp_area
+    type: string
+    default: ''
+    readonly: true
+    hidden: true
+
+  - name: Servers
+    description: Specify the NTP servers to use.
+    group: general
+    section: NTP
+    variable: ntp_servers
+    type: list<string>
+    default:
+      - 0{{ ntp_area }}.pool.ntp.org iburst
+      - 1{{ ntp_area }}.pool.ntp.org iburst
+      - 2{{ ntp_area }}.pool.ntp.org iburst
+      - 3{{ ntp_area }}.pool.ntp.org iburst
+    readonly: true
+    hidden: false
+
+  - name: Environment
+    description: Define a set of environment variables.
+    variable: openio_environment
+    default:
+      no_proxy: "{{ openio_bind_address }}"
+    type: map<string>
+    hidden: false
+    readonly: false
+    group: openio
+    section: general
+
+#
+# OpenIO
+#
+
+## OpenIO.general
+
+  - name: Version
+    variable: openio_sds_release
+    default: '20.04'
+    type: string
+    hidden: false
+    readonly: true
+    group: openio
+    section: general
+
+  - name: Namespace
+    variable: namespace
+    default: OPENIO
+    type: string
+    hidden: false
+    readonly: true
+    group: openio
+    section: general
+
+  - name: Chunksize
+    description: Default chuncksize in megabytes
+    variable: namespace_chunk_size_megabytes
+    default: 100
+    type: integer
+    hidden: false
+    readonly: true
+    group: openio
+    section: general
+
+  - name: Storage Policy
+    description: Default storage policy.
+    variable: namespace_storage_policy
+    default: THREECOPIES
+    type: string
+    hidden: false
+    readonly: true
+    group: openio
+    section: general
+
+  - name: S3 Region
+    variable: openio_s3_region
+    default: us-east-1
+    type: string
+    hidden: false
+    readonly: false
+    group: openio
+    section: general
+
+## OpenIO.passwords
+
+  - name: OpenIO Private Repositories Credentials
+    group: openio
+    section: passwords
+    variable: openio_repositories_credentials
+    type: map<string>
+    readonly: true
+
+## OpenIO.monitoring
+
+## OpenIO.OIOFS
+
+  - name: Mount Points
+    group: openio
+    section: OIOFS
+    variable: mount_points
+    type: list<struct>
+    spec:
+      - name: Account
+        variable: account
+        type: string
+      - name: Container
+        variable: container
+        type: string
+      - name: Active
+        variable: active_mode
+        type: boolean
+        default: true
+      - name: Namespace
+        variable: namespace
+        type: string
+        default: '{{ namespace }}'
+        hidden: true
+      - name: State
+        variable: state
+        type: choices
+        options:
+          - present
+          - absent
+        default: present
+        required: true
+      - variable: openio_sds_conscience_url
+        type: string
+        default: '{{ hostvars[groups["conscience"][0]]["openio_bind_address"] }}:6000'
+        hidden: true
+      - variable: oioproxy_url
+        type: string
+        default: "{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}:6006"
+        hidden: true
+      - variable: ecd_url
+        type: string
+        default: "{{ hostvars[inventory_hostname]['ansible_' ~ openio_bind_interface]['ipv4']['address'] }}:6017"
+        hidden: true
+      - variable: redis_sentinel_servers
+        type: string
+        default: '{{ oiofs_global_redis_sentinel_servers }}'
+        hidden: true
+      - name: Redis Sentinel Name
+        variable: redis_sentinel_name
+        type: string
+        default: '{{ namespace }}-master-1'
+      - name: HTTP Server
+        variable: http_server
+        type: string
+        default: 127.0.0.1:xxxx
+      - name: User
+        variable: user
+        type: string
+        default: smbguest
+      - name: Group
+        variable: group
+        type: string
+        default: smbguest
+      - name: Ignore Flush
+        variable: ignore_flush
+        type: boolean
+        default: true
+      - name: Auto Retry
+        variable: auto_retry
+        type: boolean
+        default: false
+      - name: Exports
+        variable: exports
+        type: choices
+        options:
+          - nfs
+          - samba
+      - name: NFS Exports
+        variable: nfs_exports
+        type: struct
+        spec:
+          - name: Client
+            variable: client
+            type: string
+            default: '*'
+            required: true
+          - name: UID
+            variable: uid
+            type: integer
+            required: true
+          - name: GID
+            variable: gid
+            type: integer
+            required: true
+          - name: Options
+            variable: options
+            type: list<string>
+            default: [ rw, async, all_squash, fsid=1 ]
+        when:
+          variable: exports
+          value: nfs
+      - name: Samba Exports
+        variable: samba_exports
+        type: map<string>
+        default: {}
+        when:
+          variable: exports
+          value: samba
+    readonly: false
+
+#
+# oioswift
+#
+
+## oioswift.general
+
+  - name: Pipelines
+    group: oioswift
+    section: general
+    variable: openio_oioswift_pipeline
+    type: list<string>
+    readonly: false
+    hidden: false
+
+  - name: Storage Policies
+    description: Available storage policies.
+    group: oioswift
+    section: general
+    variable: openio_oioswift_sds_oio_storage_policies
+    type: list<string>
+    default: []
+      #- SINGLE
+      #- THREECOPIES
+      #- ECISALC75D1
+    readonly: true
+    hidden: false
+
+  - name: Default Storage Policy
+    description: Define the rules to get the default policy depending on the size of an object.
+    group: oioswift
+    section: general
+    variable: openio_oioswift_sds_auto_storage_policies
+    type: list<string>  # TODO: should be a map<int> {POLICY: MIN_SIZE}
+    default: []
+      #- EC123
+      #- THREECOPIES:0
+      #- EC64:262144
+      #- EC123:67108864
+    readonly: true
+
+#
+#
+# variables not shown in the webui
+# or not yet classified
+#
+
+  - name: openio_user_openio_uid
+    variable: openio_user_openio_uid
+    default: 120
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_group_openio_gid
+    variable: openio_group_openio_gid
+    default: 220
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: namespace_meta1_digits
+    variable: namespace_meta1_digits
+    default: 2
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_replicas
+    variable: openio_replicas
+    default: 3
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_services_systemd_enabled
+    variable: openio_services_systemd_enabled
+    default: true
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_location_room
+    variable: openio_location_room
+    default: ''
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_location_rack
+    variable: openio_location_rack
+    default: ''
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_location_server
+    variable: openio_location_server
+    default: '{{ ansible_hostname }}.'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_service_location
+    variable: openio_service_location
+    default: '{{ openio_location_room + openio_location_rack + openio_location_server }}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_log_retention
+    variable: openio_log_retention
+    default: 14
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_log_max_size
+    variable: openio_log_max_size
+    default: 50M
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_log_rotate_hourly
+    variable: openio_log_rotate_hourly
+    default: true
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_unstable_repo
+    variable: openio_unstable_repo
+    default: false
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_sds_version
+    variable: openio_sds_version
+    default: latest
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_swift_version
+    variable: openio_swift_version
+    default: latest
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_swift_swift3_version
+    variable: openio_swift_swift3_version
+    default: latest
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_monitoring
+    variable: openio_monitoring
+    default: false
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: monitoring
+
+  - name: openio_billing
+    variable: openio_billing
+    default: false
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_grid
+    variable: openio_grid
+    default: false
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_elk
+    variable: openio_elk
+    default: false
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: monitoring
+
+  - name: openio_maintenance_mode
+    variable: openio_maintenance_mode
+    default: true
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_sysctl_managed
+    variable: openio_sysctl_managed
+    default: true
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_sysctl_entries
+    variable: openio_sysctl_entries
+    default:
+      net.ipv4.ip_local_port_range: "8192 65535"
+      net.ipv4.tcp_fastopen: "1"
+      net.ipv4.tcp_mtu_probing: "1"
+      net.ipv4.tcp_rfc1337: "1"
+      net.ipv4.tcp_sack: "1"
+      net.ipv4.tcp_syncookies: "0"
+      net.ipv4.tcp_timestamps: "1"
+      net.ipv4.tcp_tw_reuse: "1"
+      net.ipv4.tcp_window_scaling: "1"
+      kernel.pid_max: "196608"
+    type: map<string>
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_checks_filter
+    variable: openio_checks_filter
+    default:
+      selinux: true
+      apparmor: true
+      zookeeper_memory: true
+      reachability: false
+      mountpoint: true
+      hostname_unique: true
+    type: map<boolean>
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_any_errors_fatal
+    variable: openio_any_errors_fatal
+    default: true
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_ignore_assert_errors
+    variable: openio_ignore_assert_errors
+    default: false
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_limits_openfiles_min
+    variable: openio_limits_openfiles_min
+    default: 1024
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_manage_os_requirement
+    variable: openio_manage_os_requirement
+    default: true
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_mirror
+    variable: openio_mirror
+    default: mirror.openio.io
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_openstack_distro
+    variable: openio_openstack_distro
+    default: queens
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_no_log
+    variable: openio_no_log
+    default: true
+    type: boolean
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_meta0_volume_format
+    variable: openio_meta0_volume_format
+    default: '{mp}/{ns}/meta0-{id}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_meta1_volume_format
+    variable: openio_meta1_volume_format
+    default: '{mp}/{ns}/meta1-{id}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_meta2_volume_format
+    variable: openio_meta2_volume_format
+    default: '{mp}/{ns}/meta2-{id}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_rawx_volume_format
+    variable: openio_rawx_volume_format
+    default: '{mp}/{ns}/rawx-{id}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_blob_indexer_volume_format
+    variable: openio_blob_indexer_volume_format
+    default: '{{ openio_rawx_volume_format }}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_rdir_volume_format
+    variable: openio_rdir_volume_format
+    default: '{mp}/{ns}/rdir-{id}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_beanstalkd_volume_format
+    variable: openio_beanstalkd_volume_format
+    default: '{mp}/{ns}/beanstalkd-{id}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_zookeeper_volume_format
+    variable: openio_zookeeper_volume_format
+    default: '{mp}/{ns}/zookeeper-{id}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_redis_volume_format
+    variable: openio_redis_volume_format
+    default: '{mp}/{ns}/redis-{id}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_redis_sentinel_volume_format
+    variable: openio_redis_sentinel_volume_format
+    default: '{mp}/{ns}/redissentinel-{id}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_elasticsearch_volume_format
+    variable: openio_elasticsearch_volume_format
+    default: '{mp}/{ns}/elasticsearch-{id}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_kibana_volume_format
+    variable: openio_kibana_volume_format
+    default: '{mp}/{ns}/kibana-{id}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_filebeat_volume_format
+    variable: openio_filebeat_volume_format
+    default: '{mp}/{ns}/filebeat-{id}'
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_data_mounts
+    variable: openio_data_mounts
+    default: []
+    type: list<struct>
+    spec:
+      - name: mountpoint
+        variable: mountpoint
+        type: string
+      - name: partition
+        variable: partition
+        type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_metadata_mounts
+    variable: openio_metadata_mounts
+    default: []
+    type: list<struct>
+    spec:
+      - name: mountpoint
+        variable: mountpoint
+        type: string
+      - name: partition
+        variable: partition
+        type: string
+      - name: meta1_count
+        variable: meta1_count
+        type: integer
+        default: 1
+      - name: meta2_count
+        variable: meta2_count
+        type: integer
+        default: 1
+      - name: meta2_indexes
+        variable: meta2_indexes
+        type: list<integer>
+      - name: state
+        variable: state
+        type: string
+        default: present
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_timeout_sensible_score
+    variable: openio_timeout_sensible_score
+    default: 600
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_minimal_score_for_directory_bootstrap
+    variable: openio_minimal_score_for_directory_bootstrap
+    default: 10
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_minimal_score_for_volume_admin_bootstrap
+    variable: openio_minimal_score_for_volume_admin_bootstrap
+    default: 10
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_conscience_bind_port
+    variable: openio_conscience_bind_port
+    default: 6000
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_meta0_bind_port
+    variable: openio_meta0_bind_port
+    default: 6001
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_zookeeper_bind_port
+    variable: openio_zookeeper_bind_port
+    default: 6005
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_oioproxy_bind_port
+    variable: openio_oioproxy_bind_port
+    default: 6006
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_oioswift_bind_port
+    variable: openio_oioswift_bind_port
+    default: 6007
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_account_bind_port
+    variable: openio_account_bind_port
+    default: 6009
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_redis_bind_port
+    variable: openio_redis_bind_port
+    default: 6011
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_redissentinel_bind_port
+    variable: openio_redissentinel_bind_port
+    default: 6012
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_beanstalkd_bind_port
+    variable: openio_beanstalkd_bind_port
+    default: 6014
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_memcached_bind_port
+    variable: openio_memcached_bind_port
+    default: 6019
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_ecd_bind_port
+    variable: openio_ecd_bind_port
+    default: 6017
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_meta1_bind_port
+    variable: openio_meta1_bind_port
+    default: 6110
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_meta2_bind_port
+    variable: openio_meta2_bind_port
+    default: 6120
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_rawx_bind_port
+    variable: openio_rawx_bind_port
+    default: 6200
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_rdir_bind_port
+    variable: openio_rdir_bind_port
+    default: 6300
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_elasticsearch_bind_port
+    variable: openio_elasticsearch_bind_port
+    default: 6900
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_elasticsearch_transport_port
+    variable: openio_elasticsearch_transport_port
+    default: 6901
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_kibana_bind_port
+    variable: openio_kibana_bind_port
+    default: 6910
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_galera_bind_port
+    variable: openio_galera_bind_port
+    default: 3306
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_keystone_public_bind_port
+    variable: openio_keystone_public_bind_port
+    default: 5000
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_keystone_admin_bind_port
+    variable: openio_keystone_admin_bind_port
+    default: 35357
+    type: integer
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_gridinit_d
+    variable: openio_gridinit_d
+    default: "/etc/gridinit.d"
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+
+  - name: openio_gridinit_includes
+    variable: openio_gridinit_includes
+    default: "{{ openio_gridinit_d }}/{*,*/*}"
+    type: string
+    hidden: true
+    readonly: true
+    group: openio
+    section: unknown
+...
