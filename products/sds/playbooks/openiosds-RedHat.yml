@@ -9,6 +9,7 @@
     - openio-sds-tools
     - openio-sds-rsyslog
     - openio-sds-logrotate
+    - crontabs
   loop_control:
     loop_var: pkg
   ignore_errors: "{{ ansible_check_mode }}"

@@ -181,7 +181,7 @@ function check_os {
 
   # Ubuntu
   if [ -f /etc/lsb-release ]; then
-    cat /etc/lsb-release | grep '^DISTRIB_RELEASE=\(16\.04\|18\.04\)$'
+    cat /etc/lsb-release | grep '^DISTRIB_RELEASE=18.04$'
     local ret=$?
     [[ $ret -eq 0 ]] && _OS=UBUNTU
     return $ret

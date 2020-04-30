@@ -1,0 +1,8 @@
+---
+- name: "Gather '{{ name | d(subset) }}' facts"
+  setup:
+    gather_subset: "!all,{% if subset != 'min' %}!min,{% endif %}{{ subset }}"
+    filter: '{{ item }}'
+  when: hostvars[inventory_hostname][item] is not defined
+  loop: "{{ facts }}"
+...

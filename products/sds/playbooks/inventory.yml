@@ -2,19 +2,21 @@
 - name: POSTINSTALL - Generate inventory files
   hosts: openio
   become: true
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   vars_files:
     - ../vars/sds.yml
   tags: configure
   vars:
     inventory:
+      release: "{{ openio_sds_release }}"
       namespaces: {}
 
   tasks:
     - name: Init namespace inventory
       set_fact:
-        inventory: "{{ inventory | inv_init(namespace | d(default_namespace), {
-          'rack': openio_location_room | d('') + openio_location_rack | d('')
+        inventory: "{{ inventory | inv_init(namespace, {
+          'rack': openio_location_room + openio_location_rack,
+          'localname': inventory_hostname
         }) }}"
 
     - name: Generate meta0 inventory
@@ -22,13 +24,12 @@
         inventory: "{{ inventory | inv_meta(openio_metadata_mounts, {
           'type': 'meta0',
           'ip': openio_bind_address,
-          'location': openio_meta_location | d(default_openio_location_room + default_openio_location_rack
-          + default_openio_location_server),
+          'location': openio_meta_location | d(openio_service_location),
           'location_custom': openio_meta_location is defined,
           'legacy_id': openio_legacy_serviceid | d(0),
-          'namespace': namespace | d(default_namespace),
-          'port': default_openio_meta0_global_bind_port,
-          'volume_fmt': openio_meta0_volume_format | d('{mp}/{ns}/meta0-{id}'),
+          'namespace': namespace,
+          'port': openio_meta0_bind_port,
+          'volume_fmt': openio_meta0_volume_format,
         }) }}"
       when:
         - openio_metadata_mounts is defined
@@ -39,13 +40,12 @@
         inventory: "{{ inventory | inv_meta(openio_metadata_mounts, {
           'type': 'meta1',
           'ip': openio_bind_address,
-          'location': openio_meta_location | d(default_openio_location_room + default_openio_location_rack
-          + default_openio_location_server),
+          'location': openio_meta_location | d(openio_service_location),
           'location_custom': openio_meta_location is defined,
           'legacy_id': openio_legacy_serviceid | d(0),
-          'namespace': namespace | d(default_namespace),
-          'port': default_openio_meta1_global_bind_port,
-          'volume_fmt': openio_meta1_volume_format | d('{mp}/{ns}/meta1-{id}'),
+          'namespace': namespace,
+          'port': openio_meta1_bind_port,
+          'volume_fmt': openio_meta1_volume_format,
         }) }}"
       when:
         - openio_metadata_mounts is defined
@@ -56,13 +56,12 @@
         inventory: "{{ inventory | inv_meta(openio_metadata_mounts, {
           'type': 'meta2',
           'ip': openio_bind_address,
-          'location': openio_meta_location | d(default_openio_location_room + default_openio_location_rack
-          + default_openio_location_server),
+          'location': openio_meta_location | d(openio_service_location),
           'location_custom': openio_meta_location is defined,
           'legacy_id': openio_legacy_serviceid | d(0),
-          'namespace': namespace | d(default_namespace),
-          'port': default_openio_meta2_global_bind_port,
-          'volume_fmt': openio_meta2_volume_format | d('{mp}/{ns}/meta2-{id}'),
+          'namespace': namespace,
+          'port': openio_meta2_bind_port,
+          'volume_fmt': openio_meta2_volume_format,
         }) }}"
       when:
         - openio_metadata_mounts is defined
@@ -73,13 +72,12 @@
         inventory: "{{ inventory | inv_data(openio_data_mounts, {
           'type': 'rawx',
           'ip': openio_bind_address,
-          'location': openio_rawx_location | d(default_openio_location_room + default_openio_location_rack
-          + default_openio_location_server),
+          'location': openio_rawx_location | d(openio_service_location),
           'location_custom': openio_rawx_location is defined,
           'legacy_id': openio_legacy_serviceid | d(0),
-          'namespace': namespace | d(default_namespace),
-          'volume_fmt': openio_rawx_volume_format | d('{mp}/{ns}/rawx-{id}'),
-          'port': openio_rawx_global_bind_port | d(default_openio_rawx_global_bind_port),
+          'namespace': namespace | d(namespace),
+          'volume_fmt': openio_rawx_volume_format,
+          'port': openio_rawx_bind_port,
         }) }}"
       when:
         - openio_data_mounts is defined
@@ -91,8 +89,8 @@
             'type': 'oio-blob-indexer',
             'ip': openio_bind_address,
             'legacy_id': openio_legacy_serviceid | d(0),
-            'volume_fmt': openio_rawx_volume_format | d('{mp}/{ns}/rawx-{id}'),
-            'namespace': namespace | d(default_namespace),
+            'volume_fmt': openio_rawx_volume_format,
+            'namespace': namespace,
           }) }}"
       when:
         - openio_data_mounts is defined
@@ -103,13 +101,12 @@
         inventory: "{{ inventory | inv_data(openio_data_mounts, {
             'type': 'rdir',
             'ip': openio_bind_address,
-            'location': openio_rdir_location | d(default_openio_location_room + default_openio_location_rack
-            + default_openio_location_server),
+            'location': openio_rdir_location | d(openio_service_location),
             'location_custom': openio_rdir_location is defined,
             'legacy_id': openio_legacy_serviceid | d(0),
-            'volume_fmt': openio_rdir_volume_format | d('{mp}/{ns}/rdir-{id}'),
-            'namespace': namespace | d(default_namespace),
-            'port': openio_rdir_global_bind_port | d(default_openio_rdir_global_bind_port),
+            'volume_fmt': openio_rdir_volume_format,
+            'namespace': namespace,
+            'port': openio_rdir_bind_port,
           }) }}"
       when:
         - openio_data_mounts is defined
@@ -121,11 +118,10 @@
             'type': 'account',
             'ip': openio_account_bind_address | d(openio_bind_address),
             'id': openio_legacy_serviceid | d(0),
-            'location': openio_account_location | d(default_openio_location_room + default_openio_location_rack
-            + default_openio_location_server),
+            'location': openio_account_location | d(openio_service_location),
             'location_custom': openio_account_location is defined,
-            'namespace': namespace | d(default_namespace),
-            'port': openio_account_bind_port | d(default_openio_account_global_bind_port),
+            'namespace': namespace,
+            'port': openio_account_bind_port,
           }) }}"
       when:
         - "'account' in group_names"
@@ -136,13 +132,12 @@
             'type': 'beanstalkd',
             'ip': openio_beanstalkd_bind_address | d(openio_bind_address),
             'id': openio_legacy_serviceid | d(0),
-            'location': openio_beanstalkd_location | d(default_openio_location_room + default_openio_location_rack
-            + default_openio_location_server),
+            'location': openio_beanstalkd_location | d(openio_service_location),
             'location_custom': openio_beanstalkd_location is defined,
             'mountpoint': openio_metadata_mounts[0]['mountpoint'],
-            'volume_fmt': openio_beanstalkd_volume_format | d('{mp}/{ns}/beanstalkd-{id}'),
-            'namespace': namespace | d(default_namespace),
-            'port': openio_beanstalkd_bind_port | d(default_openio_beanstalkd_global_bind_port),
+            'volume_fmt': openio_beanstalkd_volume_format,
+            'namespace': namespace,
+            'port': openio_beanstalkd_bind_port,
           }) }}"
       when:
         - openio_metadata_mounts is defined
@@ -153,7 +148,7 @@
         inventory: "{{ inventory | inv_generic({
             'type': 'oio-event-agent',
             'id': openio_event_agent_serviceid | d(openio_legacy_serviceid | d(0)),
-            'namespace': namespace | d(default_namespace),
+            'namespace': namespace,
           }) }}"
       when:
         - "'oio-event-agent' in group_names"
@@ -163,7 +158,7 @@
         inventory: "{{ inventory | inv_generic({
             'type': 'oio-event-agent',
             'id': (openio_event_agent_serviceid | d(openio_legacy_serviceid | d(0))) | string + '.1',
-            'namespace': namespace | d(default_namespace),
+            'namespace': namespace,
           }) }}"
       when:
         - "'oio-event-agent' in group_names"
@@ -174,11 +169,10 @@
             'type': 'oioproxy',
             'ip': openio_oioproxy_bind_address | d(openio_bind_address),
             'id': openio_legacy_serviceid | d(0),
-            'port': openio_oioproxy_bind_port | d(default_openio_oioproxy_global_bind_port),
-            'location': openio_oioproxy_location | d(default_openio_location_room + default_openio_location_rack
-            + default_openio_location_server),
+            'port': openio_oioproxy_bind_port,
+            'location': openio_oioproxy_location | d(openio_service_location),
             'location_custom': openio_oioproxy_location is defined,
-            'namespace': namespace | d(default_namespace),
+            'namespace': namespace,
           }) }}"
       when:
         - "'oioproxy' in group_names"
@@ -189,10 +183,10 @@
             'type': 'zookeeper',
             'ip': openio_zookeeper_bind_address | d(openio_bind_address),
             'id': openio_legacy_serviceid | d(0),
-            'port': openio_zookeeper_bind_port | d(default_openio_zookeeper_global_bind_port),
+            'port': openio_zookeeper_bind_port,
             'mountpoint': openio_metadata_mounts[0]['mountpoint'],
-            'volume_fmt': openio_zookeeper_volume_format | d('{mp}/{ns}/zookeeper-{id}'),
-            'namespace': namespace | d(default_namespace),
+            'volume_fmt': openio_zookeeper_volume_format,
+            'namespace': namespace,
           }) }}"
       when:
         - openio_metadata_mounts is defined
@@ -210,10 +204,10 @@
             'role': item,
             'ip': openio_redis_bind_address | d(openio_bind_address),
             'id': openio_redis_serviceid | d(0) + openio_legacy_serviceid | d(0),
-            'volume_fmt': openio_redis_volume_format | d('{mp}/{ns}/redis-{id}'),
-            'port': openio_redis_server_bind_port | d(default_openio_redis_server_bind_port),
+            'volume_fmt': openio_redis_volume_format,
+            'port': openio_redis_bind_port,
             'mountpoint': openio_metadata_mounts[0]['mountpoint'],
-            'namespace': namespace | d(default_namespace),
+            'namespace': namespace,
           }) }}"
       when:
         - openio_metadata_mounts is defined
@@ -227,10 +221,10 @@
             'role': item,
             'ip': openio_redis_bind_address | d(openio_bind_address),
             'id': openio_redis_serviceid | d(0) + openio_legacy_serviceid | d(0),
-            'volume_fmt': openio_redis_sentinel_volume_format | d('{mp}/{ns}/redissentinel-{id}'),
-            'port': openio_redis_sentinel_bind_port | d(default_openio_redis_sentinel_bind_port),
+            'volume_fmt': openio_redis_sentinel_volume_format,
+            'port': openio_redissentinel_bind_port,
             'mountpoint': openio_metadata_mounts[0]['mountpoint'],
-            'namespace': namespace | d(default_namespace),
+            'namespace': namespace,
           }) }}"
       when:
         - openio_metadata_mounts is defined
@@ -244,8 +238,8 @@
             'type': 'conscience',
             'ip': openio_conscience_bind_address | d(openio_bind_address),
             'id': openio_legacy_serviceid | d(0),
-            'port': openio_conscience_bind_port | d(default_openio_conscience_global_bind_port),
-            'namespace': namespace | d(default_namespace),
+            'port': openio_conscience_bind_port,
+            'namespace': namespace,
           }) }}"
       when:
         - "'conscience' in group_names"
@@ -255,7 +249,7 @@
         inventory: "{{ inventory | inv_generic({
             'type': 'conscienceagent',
             'id': openio_legacy_serviceid | d(0),
-            'namespace': namespace | d(default_namespace),
+            'namespace': namespace,
           }) }}"
       when:
         - "'conscience-agent' in group_names"
@@ -265,7 +259,7 @@
         inventory: "{{ inventory | inv_generic({
             'type': 'oio-blob-rebuilder',
             'id': openio_legacy_serviceid | d(0),
-            'namespace': namespace | d(default_namespace),
+            'namespace': namespace,
           }) }}"
       when:
         - "'oio-blob-rebuilder' in group_names"
@@ -276,75 +270,19 @@
             'type': 'oioswift',
             'id': openio_legacy_serviceid | d(0),
             'ip': openio_oioswift_bind_address | d(openio_bind_address),
-            'port': openio_oioswift_bind_port | d(default_openio_oioswift_global_bind_port),
-            'namespace': namespace | d(default_namespace),
+            'port': openio_oioswift_bind_port,
+            'namespace': namespace,
           }) }}"
       when:
         - "'oioswift' in group_names"
-
-    - name: Generate galera inventory
-      set_fact:
-        inventory: "{{ inventory | inv_generic({
-            'type': 'galera',
-            'ip': openio_bind_address,
-            'port': 3306,
-            'volume': openio_galera_datadir | d(''),
-            'namespace': namespace | d(default_namespace),
-          }) }}"
-      when:
-        - "'galera' in group_names"
-
-    - name: "Generate keystone (public) inventory"
-      set_fact:
-        inventory: "{{ inventory | inv_generic({
-            'type': 'keystone',
-            'id': '0.0',
-            'ip': openio_keystone_bind_address | d(openio_bind_address),
-            'port': default_openio_keystone_public_bind_port,
-            'namespace': namespace | d(default_namespace),
-          }) }}"
-      when:
-        - "'keystone' in group_names"
-
-    - name: "Generate keystone (admin) inventory"
-      set_fact:
-        inventory: "{{ inventory | inv_generic({
-            'type': 'keystone',
-            'id': '0.1',
-            'ip': openio_keystone_bind_address | d(openio_bind_address),
-            'port': default_openio_keystone_admin_bind_port,
-            'namespace': namespace | d(default_namespace),
-          }) }}"
-      when:
-        - "'keystone' in group_names"
-
-    - name: Generate keepalived inventory
-      set_fact:
-        inventory: "{{ inventory | inv_generic({
-            'type': 'keepalived',
-            'ip': openio_bind_virtual_address,
-            'namespace': namespace | d(default_namespace),
-          }) }}"
-      when:
-        - "'keepalived' in group_names"
-
-    - name: Generate haproxy inventory
-      set_fact:
-        inventory: "{{ inventory | inv_generic({
-            'type': 'haproxy',
-            'ip': openio_bind_virtual_address,
-            'namespace': namespace | d(default_namespace),
-          }) }}"
-      when:
-        - "'haproxy' in group_names"
 
     - name: Generate memcached inventory
       set_fact:
         inventory: "{{ inventory | inv_generic({
             'type': 'memcached',
             'ip': openio_memcached_bind_address | d(openio_bind_address),
-            'port': openio_memcached_bind_port | d(default_openio_memcached_global_bind_port),
-            'namespace': namespace | d(default_namespace),
+            'port': openio_memcached_bind_port,
+            'namespace': namespace,
             'id': openio_legacy_serviceid | d(0),
           }) }}"
       when:
@@ -355,21 +293,21 @@
         inventory: "{{ inventory | inv_generic({
             'type': 'ecd',
             'ip': openio_ecd_bind_address | d(openio_bind_address),
-            'port': openio_ecd_bind_port | d(default_openio_ecd_global_bind_port),
-            'namespace': namespace | d(default_namespace),
+            'port': openio_ecd_bind_port,
+            'namespace': namespace,
           }) }}"
       when:
         - "'ecd' in group_names"
 
     - name: Test directory namespace presence
       stat:
-        path: "/etc/oio/sds/{{ namespace | d(default_namespace) }}"
+        path: "/etc/oio/sds/{{ namespace }}"
       register: _namespace_dir
 
     - name: Generate inventory
       copy:
         content: "---\n{{ inventory | to_nice_yaml }}\n...\n"
-        dest: /etc/oio/sds/{{ namespace | d(default_namespace) }}/inventory.yml
+        dest: /etc/oio/sds/{{ namespace }}/inventory.yml
         owner: openio
         group: openio
         mode: 0640

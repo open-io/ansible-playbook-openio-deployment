@@ -50,6 +50,7 @@ class FilterModule(object):
         inv['namespaces'][ns] = dict(
             config=dict(),
             rack=params.get('rack').rstrip('.'),
+            localname=params.get('localname'),
             services=dict(),
         )
         return inv
@@ -112,7 +113,7 @@ class FilterModule(object):
         """ Registers data services using openio_data_mounts """
         ns = params.get('namespace')
         type_ = params.get('type')
-        dport = params.get('port', 0)
+        dport = int(params.get('port', 0)) + int(params.get('legacy_id', 0))
         for k in (('namespace', ns), ('type', type_)):
             if not k[1]:
                 raise Exception('%s required for inventory generation' % k[0])

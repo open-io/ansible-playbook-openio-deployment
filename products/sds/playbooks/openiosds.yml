@@ -1,9 +1,9 @@
 ---
 - name: OpenIO SDS - Install requirements to installation on nodes
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: openio
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags:
@@ -24,11 +24,28 @@
         value: "{{ item.value }}"
         sysctl_set: true
         reload: true
-      with_dict: "{{ openio_sysctl_entries | d(default_openio_sysctl_entries) }}"
+        state: "{{ 'absent' if item.value == '' else 'present' }}"
+      with_dict: "{{ openio_sysctl_entries }}"
       when:
-        - openio_sysctl_managed | d(default_openio_sysctl_managed)
+        - openio_sysctl_managed
         - ansible_virtualization_type != 'docker'
       failed_when: false
+      tags: configure
+
+    - name: Check file /etc/cron.daily/logrotate
+      stat:
+        path: /etc/cron.daily/logrotate
+      register: cron_daily_logrotate
+      when:
+        - openio_log_rotate_hourly
+      tags: configure
+
+    - name: Activation of daily logrotate
+      command: mv /etc/cron.daily/logrotate /etc/cron.hourly/logrotate
+      when:
+        - cron_daily_logrotate is not skipped
+        - cron_daily_logrotate.stat.exists
+        - openio_log_rotate_hourly
       tags: configure
 
     - name: Set logrotate configuration
@@ -44,13 +61,6 @@
       file:
         path: /etc/cron.hourly
         state: directory
-      tags: configure
-
-    - name: Ensure cron is triggered at proper intervals for log rotation
-      file:
-        src: /etc/cron.daily/logrotate
-        dest: /etc/cron.hourly/logrotate
-        state: "{{ 'link' if default_openio_log_rotate_hourly else 'absent' }}"
       tags: configure
 
     - name: Set journald configuration
@@ -70,51 +80,45 @@
         daemon_reload: true
       when:
         - _journald_conf is changed
-        - not openio_maintenance_mode | d(default_openio_maintenance_mode) | bool
+        - not openio_maintenance_mode | bool
       tags: configure
 
-    - name: "Ensure {{ namespace | default(default_namespace) }} directory mount exists"
+    - name: "Ensure {{ namespace }} directory mount exists"
       file:
-        path: "{{ item.mountpoint }}/{{ namespace | d(default_namespace) }}"
+        path: "{{ item.mountpoint }}/{{ namespace }}"
         state: directory
         owner: openio
         group: openio
         mode: 0750
       with_items:
-        - "{{ openio_data_mounts | default( [] ) }}"
-        - "{{ openio_metadata_mounts | default( [] ) }}"
+        - "{{ openio_data_mounts }}"
+        - "{{ openio_metadata_mounts }}"
       tags: configure
 
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO redis
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: redis
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags: redis
 
   roles:
     - role: redis
-      openio_redis_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_redis_gridinit_dir: "/etc/gridinit.d/"
-      openio_redis_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_redis_provision_only: "{{ default_openio_maintenance_mode }}"
-      openio_redis_type: "redis"
-      openio_redis_bind_port: "{{ default_openio_redis_server_bind_port }}"
-      openio_redis_volume: "{{ (openio_redis_volume_format | d('{mp}/{ns}/redis-{id}')) |\
-              mkpath(openio_metadata_mounts[0]['mountpoint'], namespace | d(default_namespace), openio_redis_serviceid) }}"
+      openio_redis_volume: "{{ openio_redis_volume_format \
+        | mkpath(openio_metadata_mounts[0]['mountpoint'], namespace, openio_redis_serviceid) }}"
       when:
         - openio_metadata_mounts is defined
         - openio_metadata_mounts[0]
 
 - name: OpenIO SDS - Install and configure OpenIO redis sentinel
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: "{{ 'sentinel' if groups.sentinel is defined else 'redis' }}"
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags:
@@ -123,59 +127,46 @@
 
   roles:
     - role: redis
-      openio_redis_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_redis_gridinit_dir: "/etc/gridinit.d/"
-      openio_redis_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_redis_provision_only: "{{ default_openio_maintenance_mode }}"
       openio_redis_type: "redissentinel"
-      openio_redis_bind_port: "{{ default_openio_redis_sentinel_bind_port }}"
-      openio_redis_volume: "{{ (openio_redis_sentinel_volume_format | d('{mp}/{ns}/redissentinel-{id}')) |\
-              mkpath(openio_metadata_mounts[0]['mountpoint'], namespace | d(default_namespace), openio_redis_serviceid) }}"
+      openio_redis_bind_port: "{{ openio_redissentinel_bind_port }}"
+      openio_redis_volume: "{{ openio_redis_sentinel_volume_format \
+        | mkpath(openio_metadata_mounts[0]['mountpoint'], namespace, openio_redis_serviceid) }}"
       when:
         - openio_metadata_mounts is defined
         - openio_metadata_mounts[0]
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO Namespace
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: namespace
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags: namespace
 
   roles:
     - role: namespace
-      openio_namespace_name: "{{ namespace | d(default_namespace) }}"
-      openio_namespace_meta1_digits: "{{ namespace_meta1_digits | d(default_namespace_meta1_digits) }}"
-      openio_namespace_provision_only: "{{ default_openio_maintenance_mode }}"
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO Proxy
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: oioproxy
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags: oioproxy
 
   roles:
     - role: oioproxy
-      openio_oioproxy_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_oioproxy_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_oioproxy_gridinit_dir: "/etc/gridinit.d/"
-      openio_oioproxy_provision_only: "{{ default_openio_maintenance_mode }}"
-
-  tasks: []   # TODO healthcheck
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO zookeeper
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: zookeeper
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags: zookeeper
@@ -188,19 +179,14 @@
           | map('extract', hostvars, ['openio_bind_address']) \
           | list \
           | join_by(3) \
-          | regex_replace('([,;])', ':'+ default_openio_zookeeper_global_bind_port + '\\1') ~ ':'+ default_openio_zookeeper_global_bind_port )}}"
+          | regex_replace('([,;])', ':'+ openio_zookeeper_bind_port + '\\1') ~ ':'+ openio_zookeeper_bind_port )}}"
       tags: configure
 
   roles:
     - role: zookeeper
-      openio_zookeeper_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_zookeeper_gridinit_dir: "/etc/gridinit.d/"
-      openio_zookeeper_bind_port: "{{ default_openio_zookeeper_global_bind_port }}"
-      openio_zookeeper_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_zookeeper_provision_only: "{{ default_openio_maintenance_mode }}"
-      openio_zookeeper_volume: "{{ (openio_zookeeper_volume_format | d('{mp}/{ns}/zookeeper-{id}')) |\
-        mkpath(openio_metadata_mounts[0]['mountpoint'], namespace | d(default_namespace), openio_zookeeper_serviceid) }}"
-      openio_zookeeper_servers: "{{ _zk_string | my_zk_conf_from_string(my_ip=openio_zookeeper_bind_address,zk_port=default_openio_zookeeper_global_bind_port) }}"
+      openio_zookeeper_volume: "{{ openio_zookeeper_volume_format |\
+        mkpath(openio_metadata_mounts[0]['mountpoint'], namespace, openio_zookeeper_serviceid) }}"
+      openio_zookeeper_servers: "{{ _zk_string | my_zk_conf_from_string(my_ip=openio_zookeeper_bind_address,zk_port=openio_zookeeper_bind_port) }}"
       when:
         - openio_metadata_mounts is defined
         - openio_metadata_mounts[0]
@@ -209,16 +195,16 @@
     - block:
         - name: Check ZooKeeper status
           znode:
-            hosts: "{{ openio_bind_address | d(default_openio_bind_address) }}:{{ default_openio_zookeeper_global_bind_port }}"
-            name: "/hc/ns/{{ namespace | d(default_namespace) }}"
+            hosts: "{{ openio_bind_address }}:{{ openio_zookeeper_bind_port }}"
+            name: "/hc/ns/{{ namespace }}"
             op: get
           register: openio_zk_status
           failed_when: false
           run_once: true
           tags: configure
 
-        - name: "Bootstrapping ZooKeeper for namespace {{ namespace | d(default_namespace) }}"
-          command: "openio zk bootstrap --oio-ns {{ namespace | d(default_namespace) }}"
+        - name: "Bootstrapping ZooKeeper for namespace {{ namespace }}"
+          command: "openio zk bootstrap --oio-ns {{ namespace }}"
           when: 'openio_zk_status.msg == "The requested node does not exist."'
           register: zk_bootstrap
           until: zk_bootstrap.rc == 0
@@ -228,8 +214,8 @@
           run_once: true
           tags: configure
 
-        - name: "Bootstrapping ZooKeeper for namespace {{ namespace | d(default_namespace) }} in slow mode"
-          command: "openio zk bootstrap --oio-ns {{ namespace | d(default_namespace) }} --slow"
+        - name: "Bootstrapping ZooKeeper for namespace {{ namespace }} in slow mode"
+          command: "openio zk bootstrap --oio-ns {{ namespace }} --slow"
           when:
             - 'openio_zk_status.msg == "The requested node does not exist."'
             - zk_bootstrap.failed
@@ -247,74 +233,55 @@
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO beanstalkd
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: beanstalkd
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags: beanstalkd
 
   roles:
     - role: beanstalkd
-      openio_beanstalkd_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_beanstalkd_gridinit_dir: "/etc/gridinit.d/"
-      openio_beanstalkd_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_beanstalkd_provision_only: "{{ default_openio_maintenance_mode }}"
       openio_beanstalkd_volume: "{{ volume }}"
       when: "openio_metadata_mounts is defined and openio_metadata_mounts | length \
               or openio_data_mounts is defined and openio_data_mounts | length"
       vars:
         openio_beanstalkd_mounpoint: "{% if openio_metadata_mounts is defined and openio_metadata_mounts | length %}{{ openio_metadata_mounts[0]['mountpoint'] }}{% else %}{{ openio_data_mounts[0]['mountpoint'] }}{% endif %}"
-        volume: "{{ (openio_beanstalkd_volume_format | d('{mp}/{ns}/beanstalkd-{id}')) | mkpath(openio_beanstalkd_mounpoint, namespace | d(default_namespace), openio_beanstalkd_serviceid) }}"
-
-  tasks: []   # TODO healthcheck
+        volume: "{{ openio_beanstalkd_volume_format | mkpath(openio_beanstalkd_mounpoint, namespace, openio_beanstalkd_serviceid) }}"
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO Conscience
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: conscience
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags: conscience
 
   roles:
     - role: conscience
-      openio_conscience_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_conscience_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_conscience_gridinit_dir: "/etc/gridinit.d/"
-      openio_conscience_provision_only: "{{ default_openio_maintenance_mode }}"
-
-  tasks: []   # TODO healthcheck
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO Account
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: account
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags: account
 
   roles:
     - role: account
-      openio_account_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_account_version: "{{ openio_sds_version | d(default_openio_sds_version) }}"
-      openio_account_gridinit_dir: "/etc/gridinit.d/"
-      openio_account_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_account_provision_only: "{{ default_openio_maintenance_mode }}"
-
-  tasks: []   # TODO healthcheck
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO meta0
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: meta0
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags:
@@ -326,30 +293,22 @@
       include_role:
         name: meta
       vars:
-        openio_meta_namespace: "{{ namespace | d(default_namespace) }}"
         openio_meta_type: meta0
-        openio_meta_serviceid: "{{ 0 + openio_legacy_serviceid | d(0) | int }}"
-        openio_meta_bind_port: "{{ default_openio_meta0_global_bind_port | int + openio_meta_serviceid | int }}"
-        openio_meta_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-        openio_meta_gridinit_dir: "/etc/gridinit.d/"
-        openio_meta_volume: "{{ openio_meta0_volume_format | d('{mp}/{ns}/meta0-{id}')\
-          | mkpath(openio_metadata_mounts[0]['mountpoint'], namespace | d(default_namespace), openio_meta_serviceid) }}"
+        openio_meta_bind_port: "{{ openio_meta0_bind_port | int + openio_meta_serviceid | int }}"
+        openio_meta_volume: "{{ openio_meta0_volume_format \
+          | mkpath(openio_metadata_mounts[0]['mountpoint'], namespace, openio_meta_serviceid) }}"
         openio_meta_options: "{{ openio_meta0_options | d([]) }}"
-        openio_meta_provision_only: "{{ default_openio_maintenance_mode }}"
       when:
         - openio_metadata_mounts is defined
         - openio_metadata_mounts[0]
       tags: always
-
-# TODO healthcheck
-
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO meta1
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: meta1
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags:
@@ -378,16 +337,12 @@
           include_role:
             name: meta
           vars:
-            openio_meta_namespace: "{{ namespace | d(default_namespace) }}"
             openio_meta_type: meta1
             openio_meta_serviceid: "{{ meta.id }}"
-            openio_meta_bind_port: "{{ default_openio_meta1_global_bind_port | int + meta.id | int }}"
-            openio_meta_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-            openio_meta_gridinit_dir: "/etc/gridinit.d/"
-            openio_meta_volume: "{{ openio_meta1_volume_format | d('{mp}/{ns}/meta1-{id}')\
-              | mkpath(meta.mountpoint, namespace | d(default_namespace), openio_meta_serviceid) }}"
+            openio_meta_bind_port: "{{ openio_meta1_bind_port | int + meta.id | int }}"
+            openio_meta_volume: "{{ openio_meta1_volume_format \
+              | mkpath(meta.mountpoint, namespace, openio_meta_serviceid) }}"
             openio_meta_options: "{{ openio_meta1_options | d([]) }}"
-            openio_meta_provision_only: "{{ default_openio_maintenance_mode }}"
           with_items: "{{ meta1 }}"
           loop_control:
             loop_var: meta
@@ -395,17 +350,14 @@
       when:
         - openio_metadata_mounts is defined
         - openio_metadata_mounts[0]
-
-# TODO healthcheck
-
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO meta2
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: meta2
   strategy: mitogen_free
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags:
@@ -428,7 +380,7 @@
               {%   endif -%}
               {%   for service_id_per_partition in range(process_per_partition) -%}
               {%     set service_id_total = service_id_per_partition + process_per_partition * partition_index -%}
-              {%     set ns = namespace | d(default_namespace) -%}
+              {%     set ns = namespace -%}
               {%     if mount.meta2_indexes is defined -%}
               {%       set _dict = {'partition': mount.partition, 'mountpoint': mount.mountpoint, 'ns': ns, 'id': mount.meta2_indexes[loop.index0] + openio_legacy_serviceid | d(0) | int} -%}
               {%     else -%}
@@ -444,16 +396,12 @@
           include_role:
             name: meta
           vars:
-            openio_meta_namespace: "{{ namespace | d(default_namespace) }}"
             openio_meta_type: meta2
             openio_meta_serviceid: "{{ meta.id }}"
-            openio_meta_bind_port: "{{ default_openio_meta2_global_bind_port | int + meta.id | int }}"
-            openio_meta_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-            openio_meta_gridinit_dir: "/etc/gridinit.d/"
-            openio_meta_volume: "{{ openio_meta2_volume_format | d('{mp}/{ns}/meta2-{id}') |\
-               mkpath(meta.mountpoint, namespace | d(default_namespace), openio_meta_serviceid) }}"
+            openio_meta_bind_port: "{{ openio_meta2_bind_port | int + meta.id | int }}"
+            openio_meta_volume: "{{ openio_meta2_volume_format \
+               | mkpath(meta.mountpoint, namespace, openio_meta_serviceid) }}"
             openio_meta_options: "{{ openio_meta2_options | d([]) }}"
-            openio_meta_provision_only: "{{ default_openio_maintenance_mode }}"
           with_items: "{{ meta2 }}"
           loop_control:
             loop_var: meta
@@ -463,12 +411,7 @@
           include_role:
             name: oio-meta2-indexer
           vars:
-            openio_meta2_indexer_namespace: "{{ namespace | d(default_namespace) }}"
-            openio_meta2_indexer_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-            openio_meta2_indexer_gridinit_dir: "/etc/gridinit.d/"
-            openio_meta2_indexer_provision_only: "{{ default_openio_maintenance_mode }}"
-            openio_meta2_indexer_volume_list: "{{ openio_meta2_volume_format | d('{mp}/{ns}/meta2-{id}') |\
-              mkpaths(namespace | d(default_namespace), meta2) }}"
+            openio_meta2_indexer_volume_list: "{{ openio_meta2_volume_format | mkpaths(namespace, meta2) }}"
           tags: always
 
       when:
@@ -480,10 +423,10 @@
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO rawx
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: rawx
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags:
@@ -496,7 +439,7 @@
           {% set new_list = [] -%}
           {% for mount in openio_data_mounts -%}
           {%   set id = loop.index0 + openio_legacy_serviceid | d(0) | int -%}
-          {%   set service = {'id': id, 'port': default_openio_rawx_global_bind_port | int + id, 'volume': (openio_rawx_volume_format | d('{mp}/{ns}/rawx-{id}')) | mkpath(mount.mountpoint, namespace | d(default_namespace), id), 'state': mount.state | d("present") } -%}
+          {%   set service = {'id': id, 'port': openio_rawx_bind_port | int + id, 'volume': openio_rawx_volume_format | mkpath(mount.mountpoint, namespace, id), 'state': mount.state | d("present") } -%}
           {%   if new_list.append(service) -%}{% endif -%}
           {% endfor -%}
           {{ new_list }}
@@ -510,19 +453,13 @@
 
   roles:
     - role: rawx
-      openio_rawx_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_rawx_gridinit_dir: "/etc/gridinit.d/"
-      openio_rawx_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_rawx_provision_only: "{{ default_openio_maintenance_mode }}"
-# TODO healthcheck
-
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO oio-blob-indexer
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: oio-blob-indexer
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags:
@@ -535,7 +472,7 @@
           {% set new_list = [] -%}
           {% for mount in openio_data_mounts -%}
           {%   set id = loop.index0 + openio_legacy_serviceid | d(0) | int -%}
-          {%   set service = {'id': id, 'volume': (openio_blob_indexer_volume_format | d('{mp}/{ns}/rawx-{id}')) | mkpath(mount.mountpoint, namespace | d(default_namespace), id), 'state': mount.state | d("present") } -%}
+          {%   set service = {'id': id, 'volume': openio_blob_indexer_volume_format | mkpath(mount.mountpoint, namespace, id), 'state': mount.state | d("present") } -%}
           {%   if new_list.append(service) -%}{% endif -%}
           {% endfor -%}
           {{ new_list }}
@@ -546,19 +483,13 @@
 
   roles:
     - role: oio-blob-indexer
-      openio_blob_indexer_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_blob_indexer_gridinit_dir: "/etc/gridinit.d/"
-      openio_blob_indexer_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_blob_indexer_provision_only: "{{ default_openio_maintenance_mode }}"
-# TODO healthcheck
-
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO rdir
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: rdir
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags:
@@ -571,7 +502,7 @@
           {% set new_list = [] -%}
           {% for mount in openio_data_mounts -%}
           {%   set id = loop.index0 + openio_legacy_serviceid | d(0) | int -%}
-          {%   set service = {'id': id, 'port': default_openio_rdir_global_bind_port | int + id, 'volume': (openio_rdir_volume_format | d('{mp}/{ns}/rdir-{id}')) | mkpath(mount.mountpoint, namespace | d(default_namespace), id), 'state': mount.state | d("present") } -%}
+          {%   set service = {'id': id, 'port': openio_rdir_bind_port | int + id, 'volume': openio_rdir_volume_format | mkpath(mount.mountpoint, namespace, id), 'state': mount.state | d("present") } -%}
           {%   if new_list.append(service) -%}{% endif -%}
           {% endfor -%}
           {{ new_list }}
@@ -582,19 +513,13 @@
 
   roles:
     - role: rdir
-      openio_rdir_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_rdir_gridinit_dir: "/etc/gridinit.d/"
-      openio_rdir_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_rdir_provision_only: "{{ default_openio_maintenance_mode }}"
-# TODO healthcheck
-
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO oio-blob-rebuilder
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: oio-blob-rebuilder
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags:
@@ -602,19 +527,13 @@
 
   roles:
     - role: oio-blob-rebuilder
-      openio_blob_rebuilder_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_blob_rebuilder_gridinit_dir: "/etc/gridinit.d/"
-      openio_blob_rebuilder_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_blob_rebuilder_provision_only: "{{ default_openio_maintenance_mode }}"
-
-  tasks: []   # TODO healthcheck
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO oio-event-agent
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: oio-event-agent
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags:
@@ -622,19 +541,13 @@
 
   roles:
     - role: oio-event-agent
-      openio_event_agent_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_event_agent_gridinit_dir: "/etc/gridinit.d/"
-      openio_event_agent_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_event_agent_provision_only: "{{ default_openio_maintenance_mode }}"
-
-  tasks: []   # TODO healthcheck
 ###
 
 - name: Install and configure OpenIO ecd
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: ecd
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags:
@@ -642,55 +555,26 @@
 
   roles:
     - role: ecd
-      openio_ecd_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_ecd_gridinit_dir: "/etc/gridinit.d/"
-      openio_ecd_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_ecd_provision_only: "{{ default_openio_maintenance_mode }}"
-      openio_ecd_gridinit_start_at_boot: "{{ default_openio_services_systemd_enabled }}"
-  tasks: []   # TODO healthcheck
-###
-
-- name: Install and configure OpenIO xcute
-  any_errors_fatal: true
-  hosts: xcute
-  become: true
-  environment: "{{ default_openio_environment }}"
-  vars_files:
-    - ../vars/sds.yml
-  tags: xcute
-
-  roles:
-    - role: xcute
-      openio_xcute_gridinit_dir: "/etc/gridinit.d/"
-      openio_xcute_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_xcute_provision_only: "{{ default_openio_maintenance_mode }}"
-  tasks: []   # TODO healthcheck
 ###
 
 - name: OpenIO SDS - Install and configure OpenIO conscience-agent
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: conscience-agent
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags: conscience-agent
 
   roles:
     - role: conscienceagent
-      openio_conscienceagent_namespace: "{{ namespace | d(default_namespace) }}"
-      openio_conscienceagent_gridinit_dir: "/etc/gridinit.d/"
-      openio_conscienceagent_gridinit_file_prefix: "{{ namespace | d(default_namespace) }}-"
-      openio_conscienceagent_provision_only: "{{ default_openio_maintenance_mode }}"
-
-  tasks: []   # TODO healthcheck
 ###
 
 - name: OpenIO SDS - "Bootstrapping OpenIO namespace"
-  any_errors_fatal: "{{ default_openio_any_errors_fatal }}"
+  any_errors_fatal: "{{ openio_any_errors_fatal }}"
   hosts: conscience[0]:meta0:meta1
   become: true
-  environment: "{{ default_openio_environment }}"
+  environment: "{{ openio_environment }}"
   vars_files:
     - ../vars/sds.yml
   tags: bootstrap
@@ -717,24 +601,24 @@
               changed_when: false
 
             - name: "Wait for meta0 to be up"
-              command: "openio cluster wait -d {{ openio_timeout_sensible_score | default(600) }} meta0 --oio-ns={{ namespace | d(default_namespace) }} -n {{ groups.meta0 | d([]) | length }} -s 0"
+              command: "openio cluster wait -d {{ openio_timeout_sensible_score }} meta0 --oio-ns={{ namespace }} -n {{ groups.meta0 | d([]) | length }} -s 0"
 
             - name: "Unlock meta0 scores"
-              command: "openio cluster unlockall meta0 --oio-ns={{ namespace | d(default_namespace) }}"
+              command: "openio cluster unlockall meta0 --oio-ns={{ namespace }}"
 
             - name: "Wait for meta1 to be up"
-              command: "openio cluster wait -d {{ openio_timeout_sensible_score | default(600) }} meta1 --oio-ns={{ namespace | d(default_namespace) }} -n {{ nb_meta1 }} -s 0"
+              command: "openio cluster wait -d {{ openio_timeout_sensible_score }} meta1 --oio-ns={{ namespace }} -n {{ nb_meta1 }} -s 0"
 
             - name: "Unlock meta1 scores"
-              command: "openio cluster unlockall meta1 --oio-ns={{ namespace | d(default_namespace) }}"
+              command: "openio cluster unlockall meta1 --oio-ns={{ namespace }}"
 
             - name: "Wait for meta0 & meta1 services"
-              command: "openio cluster wait -d {{ openio_timeout_sensible_score | default(600) }} meta0 meta1 --oio-ns={{ namespace | d(default_namespace) }} -s {{ openio_minimal_score_for_directory_bootstrap | default(10) }}"
-              async: "{{ ( openio_timeout_sensible_score | default(600) | int ) + 6 }}"
+              command: "openio cluster wait -d {{ openio_timeout_sensible_score }} meta0 meta1 --oio-ns={{ namespace }} -s {{ openio_minimal_score_for_directory_bootstrap }}"
+              async: "{{ ( openio_timeout_sensible_score | int ) + 6 }}"
               poll: 5
 
-            - name: "Bootstrapping OpenIO namespace {{ namespace | d(default_namespace) }} with {{ openio_replicas | d(default_openio_replicas) }} replicas"
-              command: "openio --oio-ns={{ namespace | d(default_namespace) }} directory bootstrap --replicas {{ openio_replicas | d(default_openio_replicas) }} --no-rdir"
+            - name: "Bootstrapping OpenIO namespace {{ namespace }} with {{ openio_replicas }} replicas"
+              command: "openio --oio-ns={{ namespace }} directory bootstrap --replicas {{ openio_replicas }} --no-rdir"
               register: meta_bootstrap
               until: meta_bootstrap.rc == 0
               retries: 3
@@ -751,37 +635,37 @@
 
         - block:
             - name: "Wait for meta0 to be up"
-              command: "openio cluster wait -d {{ openio_timeout_sensible_score | default(600) }} meta0 --oio-ns={{ namespace | d(default_namespace) }} -n {{ groups.meta0 | d([]) | length }} -s 0"
+              command: "openio cluster wait -d {{ openio_timeout_sensible_score }} meta0 --oio-ns={{ namespace }} -n {{ groups.meta0 | d([]) | length }} -s 0"
 
             - name: "Wait for meta1 to be up"
-              command: "openio cluster wait -d {{ openio_timeout_sensible_score | default(600) }} meta1 --oio-ns={{ namespace | d(default_namespace) }} -n {{ groups.meta1 | d([]) | length }} -s 0"
+              command: "openio cluster wait -d {{ openio_timeout_sensible_score }} meta1 --oio-ns={{ namespace }} -n {{ groups.meta1 | d([]) | length }} -s 0"
 
             - name: "Unlock all scores"
-              command: "openio cluster unlockall --oio-ns={{ namespace | d(default_namespace) }}"
+              command: "openio cluster unlockall --oio-ns={{ namespace }}"
 
             - name: "Wait for rdir, rawx & meta2 services"
-              command: "openio cluster wait -d {{ openio_timeout_sensible_score | default(600) }} rawx rdir meta2 --oio-ns={{ namespace | d(default_namespace) }} -s {{ openio_minimal_score_for_volume_admin_bootstrap | default(10) }}"
-              async: "{{ ( openio_timeout_sensible_score | default(600) | int ) + 6 }}"
+              command: "openio cluster wait -d {{ openio_timeout_sensible_score }} rawx rdir meta2 --oio-ns={{ namespace }} -s {{ openio_minimal_score_for_volume_admin_bootstrap }}"
+              async: "{{ ( openio_timeout_sensible_score | int ) + 6 }}"
               poll: 5
           when: inventory_hostname == groups.conscience[0]
 
         - block:
             - set_fact:
-                _location: "{{ openio_location_room | default ('') }}{{ openio_location_rack | default ('') }}{{ openio_location_server | default (default_openio_location_server) }}0"
+                _location: "{{ openio_rdir_location | d(openio_service_location) }}0"
               changed_when: false
 
             - name: Register number of rdir
-              shell: "openio --oio-ns {{ namespace | d(default_namespace) }} cluster list rdir -f value | wc -l"
+              shell: "openio --oio-ns {{ namespace }} cluster list rdir -f value | wc -l"
               register: nb_rdir
               changed_when: false
 
             - name: Register number of rawx
-              shell: "openio --oio-ns {{ namespace | d(default_namespace) }} cluster list rawx -f value | wc -l"
+              shell: "openio --oio-ns {{ namespace }} cluster list rawx -f value | wc -l"
               register: nb_rawx
               changed_when: false
 
             - name: Register number of meta2
-              shell: "openio --oio-ns {{ namespace | d(default_namespace) }} cluster list meta2 -f value | wc -l"
+              shell: "openio --oio-ns {{ namespace }} cluster list meta2 -f value | wc -l"
               register: nb_meta2
               changed_when: false
 
@@ -791,23 +675,23 @@
                 min_dist: "{{ _location.split('.') | length }}"
               changed_when: false
 
-            - name: "Bootstrapping rawx reverse directory for namespace {{ namespace | d(default_namespace) }}, trying to respect minimum distance between rdir and associated rawx"
-              command: "openio --oio-ns={{ namespace | d(default_namespace) }} rdir bootstrap rawx --min-dist {{ min_dist }}"
+            - name: "Bootstrapping rawx reverse directory for namespace {{ namespace }}, trying to respect minimum distance between rdir and associated rawx"
+              command: "openio --oio-ns={{ namespace }} rdir bootstrap rawx --min-dist {{ min_dist }}"
               register: rdir_bootstrap_rawx_min_dist
               ignore_errors: true
 
-            - name: "Bootstrapping rawx reverse directory for namespace {{ namespace | d(default_namespace) }}"
-              command: "openio --oio-ns={{ namespace | d(default_namespace) }} rdir bootstrap rawx --max-per-rdir {{ max_ref_per_rdir }}"
+            - name: "Bootstrapping rawx reverse directory for namespace {{ namespace }}"
+              command: "openio --oio-ns={{ namespace }} rdir bootstrap rawx --max-per-rdir {{ max_ref_per_rdir }}"
               when:
                 - rdir_bootstrap_rawx_min_dist.rc != 0
 
-            - name: "Bootstrapping meta2 reverse directory for namespace {{ namespace | d(default_namespace) }}, trying to respect minimum distance between rdir and associated meta2"
-              command: "openio --oio-ns={{ namespace | d(default_namespace) }} rdir bootstrap meta2 --min-dist {{ min_dist }}"
+            - name: "Bootstrapping meta2 reverse directory for namespace {{ namespace }}, trying to respect minimum distance between rdir and associated meta2"
+              command: "openio --oio-ns={{ namespace }} rdir bootstrap meta2 --min-dist {{ min_dist }}"
               register: rdir_bootstrap_meta2_min_dist
               ignore_errors: true
 
-            - name: "Bootstrapping meta2 reverse directory for namespace {{ namespace | d(default_namespace) }}"
-              command: "openio --oio-ns={{ namespace | d(default_namespace) }} rdir bootstrap meta2 --max-per-rdir {{ max_ref_per_rdir }}"
+            - name: "Bootstrapping meta2 reverse directory for namespace {{ namespace }}"
+              command: "openio --oio-ns={{ namespace }} rdir bootstrap meta2 --max-per-rdir {{ max_ref_per_rdir }}"
               when:
                 - rdir_bootstrap_meta2_min_dist.rc != 0
           when:
@@ -817,6 +701,6 @@
       when:
         - openio_bootstrap is defined and openio_bootstrap | bool
         - not ansible_check_mode
-        - openio_maintenance_mode is defined and not openio_maintenance_mode | bool or not default_openio_maintenance_mode
+        - not openio_maintenance_mode | bool
 ###
 ...
