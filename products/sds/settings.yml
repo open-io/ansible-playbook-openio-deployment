@@ -23,24 +23,6 @@ settings:
     group: openio
     section: networking
 
-  - name: openio_bind_mgmt_address
-    variable: openio_bind_mgmt_address
-    default: '{{ openio_bind_address }}'
-    type: string
-    hidden: true
-    readonly: true
-    group: openio
-    section: monitoring
-
-  - name: Management network interface
-    variable: openio_bind_mgmt_interface
-    default: '{{ openio_bind_interface }}'
-    type: string
-    hidden: false
-    readonly: false
-    group: openio
-    section: monitoring
-
 #
 # General
 #
@@ -453,42 +435,6 @@ settings:
     group: openio
     section: unknown
 
-  - name: openio_monitoring
-    variable: openio_monitoring
-    default: false
-    type: boolean
-    hidden: true
-    readonly: true
-    group: openio
-    section: monitoring
-
-  - name: openio_billing
-    variable: openio_billing
-    default: false
-    type: boolean
-    hidden: true
-    readonly: true
-    group: openio
-    section: unknown
-
-  - name: openio_grid
-    variable: openio_grid
-    default: false
-    type: boolean
-    hidden: true
-    readonly: true
-    group: openio
-    section: unknown
-
-  - name: openio_elk
-    variable: openio_elk
-    default: false
-    type: boolean
-    hidden: true
-    readonly: true
-    group: openio
-    section: monitoring
-
   - name: openio_maintenance_mode
     variable: openio_maintenance_mode
     default: true
@@ -531,6 +477,7 @@ settings:
     default:
       selinux: true
       apparmor: true
+      firewall: true
       zookeeper_memory: true
       reachability: false
       mountpoint: true
@@ -688,33 +635,6 @@ settings:
   - name: openio_redis_sentinel_volume_format
     variable: openio_redis_sentinel_volume_format
     default: '{mp}/{ns}/redissentinel-{id}'
-    type: string
-    hidden: true
-    readonly: true
-    group: openio
-    section: unknown
-
-  - name: openio_elasticsearch_volume_format
-    variable: openio_elasticsearch_volume_format
-    default: '{mp}/{ns}/elasticsearch-{id}'
-    type: string
-    hidden: true
-    readonly: true
-    group: openio
-    section: unknown
-
-  - name: openio_kibana_volume_format
-    variable: openio_kibana_volume_format
-    default: '{mp}/{ns}/kibana-{id}'
-    type: string
-    hidden: true
-    readonly: true
-    group: openio
-    section: unknown
-
-  - name: openio_filebeat_volume_format
-    variable: openio_filebeat_volume_format
-    default: '{mp}/{ns}/filebeat-{id}'
     type: string
     hidden: true
     readonly: true
@@ -924,60 +844,6 @@ settings:
   - name: openio_rdir_bind_port
     variable: openio_rdir_bind_port
     default: 6300
-    type: integer
-    hidden: true
-    readonly: true
-    group: openio
-    section: unknown
-
-  - name: openio_elasticsearch_bind_port
-    variable: openio_elasticsearch_bind_port
-    default: 6900
-    type: integer
-    hidden: true
-    readonly: true
-    group: openio
-    section: unknown
-
-  - name: openio_elasticsearch_transport_port
-    variable: openio_elasticsearch_transport_port
-    default: 6901
-    type: integer
-    hidden: true
-    readonly: true
-    group: openio
-    section: unknown
-
-  - name: openio_kibana_bind_port
-    variable: openio_kibana_bind_port
-    default: 6910
-    type: integer
-    hidden: true
-    readonly: true
-    group: openio
-    section: unknown
-
-  - name: openio_galera_bind_port
-    variable: openio_galera_bind_port
-    default: 3306
-    type: integer
-    hidden: true
-    readonly: true
-    group: openio
-    section: unknown
-
-  - name: openio_keystone_public_bind_port
-    variable: openio_keystone_public_bind_port
-    default: 5000
-    type: integer
-    hidden: true
-    readonly: true
-    group: openio
-    section: unknown
-
-  - name: openio_keystone_admin_bind_port
-    variable: openio_keystone_admin_bind_port
-    default: 35357
     type: integer
     hidden: true
     readonly: true

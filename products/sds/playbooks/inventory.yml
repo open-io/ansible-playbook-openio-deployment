@@ -9,6 +9,7 @@
   vars:
     inventory:
       release: "{{ openio_sds_release }}"
+      hostname: "{{ ansible_nodename }}"
       namespaces: {}
 
   tasks:

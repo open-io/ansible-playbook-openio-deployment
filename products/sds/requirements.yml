@@ -47,10 +47,10 @@
   version: 49a894e840a2e9a66032715c77086da4e1f9b896
 - name: oioswift
   src: https://github.com/open-io/ansible-role-openio-oioswift.git
-  version: 3b0c513c2ddc3b9a86baa3c906f22f1136191d24
+  version: 95065a18b642b5c0ff5ee1b5e3efe7bbe1bc899c
 - name: rawx
   src: https://github.com/open-io/ansible-role-openio-rawx.git
-  version: 8cd81a310ba40c2e32aa90377fa5562d729f8c78
+  version: c03a85635b873a0bf0755a2a457e1439add0f2f0
 - name: rdir
   src: https://github.com/open-io/ansible-role-openio-rdir.git
   version: 6dc7d90f5a08347cd014ca2085324c76df1b1552

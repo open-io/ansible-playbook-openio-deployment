@@ -439,7 +439,11 @@
           {% set new_list = [] -%}
           {% for mount in openio_data_mounts -%}
           {%   set id = loop.index0 + openio_legacy_serviceid | d(0) | int -%}
-          {%   set service = {'id': id, 'port': openio_rawx_bind_port | int + id, 'volume': openio_rawx_volume_format | mkpath(mount.mountpoint, namespace, id), 'state': mount.state | d("present") } -%}
+          {%   set service = {'id': id,
+                              'port': openio_rawx_bind_port | int + id,
+                              'volume': openio_rawx_volume_format | mkpath(mount.mountpoint, namespace, id),
+                              'state': mount.state | d("present"),
+                              'tls_url': openio_bind_address_tls | d(openio_rawx_bind_address) ~ ':' ~ (openio_rawx_bind_port | int + id) } -%}
           {%   if new_list.append(service) -%}{% endif -%}
           {% endfor -%}
           {{ new_list }}

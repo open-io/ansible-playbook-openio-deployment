@@ -12,7 +12,7 @@
     - name: Check Ansible version
       assert:
         that:
-          - ansible_version.full is version_compare('2.5.0', '>=')
+          - ansible_version.full is version_compare('2.7.0', '>=')
           - ansible_version.full is version_compare('2.10.0', '<')
         fail_msg: "Your release of ansible is not supported, please refer to the file 'ansible.pip'"
       check_mode: false
@@ -178,8 +178,8 @@
 
     - name: Check SELinux is disabled
       assert:
-        that: ansible_selinux.status == 'disabled'
-        fail_msg: "SELinux must be disabled and libselinux-python must be installed"
+        that: ansible_selinux.status == 'disabled' or ansible_selinux.mode == 'permissive'
+        fail_msg: "SELinux must be disabled/permissive and libselinux-python must be installed"
       ignore_errors: "{{ openio_ignore_assert_errors }}"
       when:
         - openio_checks_filter.selinux
@@ -194,22 +194,27 @@
         - openio_checks_filter.apparmor
         - ansible_os_family == 'Debian'
 
-    - name: Stop and disable firewalld.
-      service:
-        name: firewalld
-        state: stopped
-        enabled: false
-      register: _firewalld_disable
-      when:
-        - openio_manage_os_requirement
-        - "'firewalld' in ps.stdout"
-        - ansible_os_family == 'RedHat'
+    - name: Check firewall
+      block:
+        - name: Stop and disable firewalld.
+          service:
+            name: firewalld
+            state: stopped
+            enabled: false
+          register: _firewalld_disable
+          when:
+            - openio_manage_os_requirement
+            - "'firewalld' in ps.stdout"
+            - ansible_os_family == 'RedHat'
 
-    - name: Check firewalld is disabled
-      assert:
-        that: "'firewalld' not in ps.stdout or _firewalld_disable | default(false) is success"
-        fail_msg: "The firewalld service must be disabled"
-      ignore_errors: "{{ openio_ignore_assert_errors }}"
+        - name: Check firewalld is disabled
+          assert:
+            that: "'firewalld' not in ps.stdout or _firewalld_disable | default(false) is success"
+            fail_msg: "The firewalld service must be disabled"
+          ignore_errors: "{{ openio_ignore_assert_errors }}"
+
+      when: openio_checks_filter.firewall
+      # end of block firewall
 
     - name: Check memory for zookeeper
       assert:
