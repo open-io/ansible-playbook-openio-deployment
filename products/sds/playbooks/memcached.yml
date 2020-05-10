@@ -1,7 +1,7 @@
 ---
 - name: Memcached - Install and configure Memcached
   any_errors_fatal: true
-  hosts: "{{ 'memcached' if groups.memcached is defined else ['oioswift'] }}"
+  hosts: "{{ 'memcached' if groups.memcached is defined else 'oioswift' }}"
   become: true
   environment: "{{ openio_environment }}"
   vars_files:
